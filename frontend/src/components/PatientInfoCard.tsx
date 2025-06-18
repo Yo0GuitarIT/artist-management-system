@@ -19,8 +19,8 @@ export default function PatientInfoCard({
       </h2>
 
       {patientBasicInfo ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div className="space-y-3">
             <div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 病歷號:

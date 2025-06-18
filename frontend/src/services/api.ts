@@ -2,8 +2,10 @@ import axios from "axios";
 import type {
   PatientBasicInfoResponse,
   PatientDetail,
+  PatientNationality,
   PatientDetailResponse,
   CodeOptionsResponse,
+  PatientNationalityResponse,
 } from "../types/patientBasicInfo";
 
 // 基本 API 回應型別
@@ -78,6 +80,50 @@ export const apiService = {
     // 根據分類取得代號選項
     getByCategory: async (category: string): Promise<CodeOptionsResponse> => {
       const response = await api.get(`/code-options/${category}`);
+      return response.data;
+    },
+  },
+
+  // 國籍資料操作
+  patientNationality: {
+    // 取得病人的國籍資料
+    getByMrn: async (mrn: string): Promise<PatientNationalityResponse> => {
+      const response = await api.get(`/patient-nationality/${mrn}`);
+      return response.data;
+    },
+
+    // 新增國籍資料
+    create: async (data: {
+      mrn: string;
+      nationalityCode: string;
+    }): Promise<PatientNationalityResponse> => {
+      const response = await api.post("/patient-nationality", data);
+      return response.data;
+    },
+
+    // 更新國籍資料
+    update: async (
+      id: number,
+      data: { nationalityCode?: string; isPrimary?: boolean }
+    ): Promise<PatientNationalityResponse> => {
+      const response = await api.put(`/patient-nationality/${id}`, data);
+      return response.data;
+    },
+
+    // 刪除國籍資料
+    delete: async (
+      id: number
+    ): Promise<{ success: boolean; message?: string }> => {
+      const response = await api.delete(`/patient-nationality/${id}`);
+      return response.data;
+    },
+
+    // 批次更新國籍資料
+    batchUpdate: async (data: {
+      mrn: string;
+      nationalities: PatientNationality[];
+    }): Promise<PatientNationalityResponse> => {
+      const response = await api.post("/patient-nationality/batch", data);
       return response.data;
     },
   },

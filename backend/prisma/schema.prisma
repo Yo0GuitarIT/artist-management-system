@@ -69,8 +69,26 @@ model PatientDetail {
 
   // 關聯到基本資料表
   patientBasicInfo      PatientBasicInfo @relation(fields: [mrn], references: [mrn], onDelete: Cascade)
+  
+  // 關聯到國籍資料
+  nationalities         PatientNationality[]
 
   @@map("patient_detail")
+}
+
+// 病人國籍資料表
+model PatientNationality {
+  id                    Int      @id @default(autoincrement())
+  mrn                   String   // 病歷號 (外鍵)
+  nationalityCode       String   // 國籍代碼
+  isPrimary             Boolean  @default(false) // 是否為主要國籍
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // 關聯到病人明細資料
+  patientDetail         PatientDetail @relation(fields: [mrn], references: [mrn], onDelete: Cascade)
+
+  @@map("patient_nationality")
 }
 
 // 代號選項對照表

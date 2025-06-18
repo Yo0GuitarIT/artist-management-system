@@ -110,6 +110,52 @@ async function seedCodeOptions() {
       },
     ];
 
+    // 國籍選項
+    const nationalityOptions = [
+      {
+        category: "nationality",
+        code: "ATA",
+        name: "南極洲",
+        displayOrder: 1,
+      },
+      {
+        category: "nationality",
+        code: "JPN",
+        name: "日本",
+        displayOrder: 2,
+      },
+      {
+        category: "nationality",
+        code: "TWN",
+        name: "台灣",
+        displayOrder: 3,
+      },
+      {
+        category: "nationality",
+        code: "KOR",
+        name: "韓國",
+        displayOrder: 4,
+      },
+      {
+        category: "nationality",
+        code: "USA",
+        name: "美國",
+        displayOrder: 5,
+      },
+      {
+        category: "nationality",
+        code: "CAN",
+        name: "加拿大",
+        displayOrder: 6,
+      },
+      {
+        category: "nationality",
+        code: "BEL",
+        name: "比利時",
+        displayOrder: 7,
+      },
+    ];
+
     // 批量新增所有選項
     const allOptions = [
       ...genderOptions,
@@ -118,6 +164,7 @@ async function seedCodeOptions() {
       ...bloodTypeRHOptions,
       ...educationOptions,
       ...incomeOptions,
+      ...nationalityOptions,
     ];
 
     for (const option of allOptions) {

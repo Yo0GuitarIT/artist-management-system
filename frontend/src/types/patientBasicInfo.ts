@@ -44,6 +44,17 @@ export interface PatientDetail {
   incomeLevel?: string;
   createdAt: string;
   updatedAt: string;
+  nationalities?: PatientNationality[]; // 國籍資料陣列
+}
+
+// 病人國籍資料類型
+export interface PatientNationality {
+  id: number;
+  mrn: string;
+  nationalityCode: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // 代號選項類型
@@ -75,5 +86,11 @@ export interface PatientDetailResponse {
 export interface CodeOptionsResponse {
   success: boolean;
   data?: CodeOption[];
+  message?: string;
+}
+
+export interface PatientNationalityResponse {
+  success: boolean;
+  data?: PatientNationality | PatientNationality[];
   message?: string;
 }

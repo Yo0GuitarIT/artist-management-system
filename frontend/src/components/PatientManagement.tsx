@@ -3,10 +3,12 @@ import { apiService } from "../services/api";
 import type {
   PatientBasicInfo,
   PatientDetail,
+  PatientNationality,
   CodeOption,
 } from "../types/patientBasicInfo";
 import PatientInfoCard from "./PatientInfoCard";
 import PatientDetailEditCard from "./PatientDetailEditCard";
+import PatientNationalityCard from "./PatientNationalityCard";
 
 interface CodeOptionsMap {
   biological_gender: CodeOption[];
@@ -15,6 +17,7 @@ interface CodeOptionsMap {
   blood_type_rh: CodeOption[];
   education_level: CodeOption[];
   income_level: CodeOption[];
+  nationality: CodeOption[];
 }
 
 export default function PatientManagement() {
@@ -34,6 +37,9 @@ export default function PatientManagement() {
   const [editingDetail, setEditingDetail] = useState<PatientDetail | null>(
     null
   );
+  const [editingNationalities, setEditingNationalities] = useState<
+    PatientNationality[]
+  >([]);
 
   // 代號選項
   const [codeOptions, setCodeOptions] = useState<CodeOptionsMap>({
@@ -43,6 +49,7 @@ export default function PatientManagement() {
     blood_type_rh: [],
     education_level: [],
     income_level: [],
+    nationality: [],
   });
 
   // 載入代號選項
@@ -56,6 +63,7 @@ export default function PatientManagement() {
           "blood_type_rh",
           "education_level",
           "income_level",
+          "nationality",
         ];
 
         const optionsMap: Partial<CodeOptionsMap> = {};
@@ -111,6 +119,10 @@ export default function PatientManagement() {
               basicResponse.data.ptName,
           };
           setEditingDetail(detailWithName);
+          // 設置編輯中的國籍資料
+          setEditingNationalities(
+            basicResponse.data.patientDetail.nationalities || []
+          );
         } else {
           // 建立空白明細資料供編輯
           const emptyDetail: PatientDetail = {
@@ -129,8 +141,10 @@ export default function PatientManagement() {
             incomeLevel: "",
             createdAt: "",
             updatedAt: "",
+            nationalities: [], // 初始化為空陣列
           };
           setEditingDetail(emptyDetail);
+          setEditingNationalities([]); // 初始化編輯中的國籍資料
         }
       } else {
         setError(basicResponse.message || "查詢失敗");
@@ -151,13 +165,32 @@ export default function PatientManagement() {
     setError("");
 
     try {
-      const response = await apiService.patientDetail.createOrUpdate(
-        editingDetail
-      );
+      // 同時處理基本資料和國籍資料
+      const [detailResponse, nationalityResponse] = await Promise.all([
+        apiService.patientDetail.createOrUpdate(editingDetail),
+        apiService.patientNationality.batchUpdate({
+          mrn: editingDetail.mrn,
+          nationalities: editingNationalities,
+        }),
+      ]);
 
-      if (response.success && response.data) {
-        setPatientDetail(response.data);
-        setEditingDetail(response.data);
+      if (detailResponse.success && nationalityResponse.success) {
+        // 更新本地狀態
+        if (detailResponse.data) {
+          const nationalities = Array.isArray(nationalityResponse.data)
+            ? nationalityResponse.data
+            : [];
+
+          setPatientDetail({
+            ...detailResponse.data,
+            nationalities,
+          });
+          setEditingDetail({
+            ...detailResponse.data,
+            nationalities,
+          });
+          setEditingNationalities(nationalities);
+        }
 
         // 重新查詢病人資料以刷新顯示
         const basicResponse = await apiService.patientBasicInfo.getByMrn(
@@ -169,10 +202,12 @@ export default function PatientManagement() {
 
         alert("儲存成功！");
       } else {
-        setError(response.message || "儲存失敗");
+        setError(
+          detailResponse.message || nationalityResponse.message || "儲存失敗"
+        );
       }
     } catch (error) {
-      console.error("儲存病人明細資料失敗:", error);
+      console.error("儲存病人資料失敗:", error);
       setError("儲存失敗，請稍後再試");
     } finally {
       setLoading(false);
@@ -183,6 +218,7 @@ export default function PatientManagement() {
   const handleCancel = () => {
     if (patientDetail) {
       setEditingDetail(patientDetail);
+      setEditingNationalities(patientDetail.nationalities || []);
     } else if (patientBasicInfo) {
       // 重新建立空白明細資料
       const emptyDetail: PatientDetail = {
@@ -200,10 +236,13 @@ export default function PatientManagement() {
         incomeLevel: "",
         createdAt: "",
         updatedAt: "",
+        nationalities: [], // 初始化為空陣列
       };
       setEditingDetail(emptyDetail);
+      setEditingNationalities([]);
     } else {
       setEditingDetail(null);
+      setEditingNationalities([]);
     }
   };
 
@@ -279,18 +318,38 @@ export default function PatientManagement() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 病人資訊卡片 */}
-        <PatientInfoCard patientBasicInfo={patientBasicInfo} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左側：病人資訊卡片 */}
+        <div className="lg:col-span-1">
+          <PatientInfoCard patientBasicInfo={patientBasicInfo} />
+        </div>
 
-        {/* 基本資料卡片 */}
-        <PatientDetailEditCard
-          editingDetail={editingDetail}
-          patientDetail={patientDetail}
-          codeOptions={codeOptions}
-          onEditingDetailChange={setEditingDetail}
-          getOptionName={getOptionName}
-        />
+        {/* 右側：基本資料和國籍資料卡片 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* 基本資料卡片 */}
+          <PatientDetailEditCard
+            editingDetail={editingDetail}
+            patientDetail={patientDetail}
+            codeOptions={codeOptions}
+            onEditingDetailChange={setEditingDetail}
+            getOptionName={getOptionName}
+          />
+
+          {/* 國籍資料卡片 */}
+          {patientBasicInfo && (
+            <PatientNationalityCard
+              mrn={patientBasicInfo.mrn}
+              nationalities={editingNationalities}
+              onNationalitiesChange={setEditingNationalities}
+              onNationalityDelete={async () => {
+                // 刪除成功後重新載入病人基本資料
+                if (searchMrn) {
+                  handleSearch({ preventDefault: () => {} } as React.FormEvent);
+                }
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
