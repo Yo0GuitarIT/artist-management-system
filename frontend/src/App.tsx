@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { apiService } from "./services/api";
 import PatientForm from "./components/PatientForm";
 import PatientList from "./components/PatientList";
+import PatientBasicInfoSearch from "./components/PatientBasicInfoSearch";
 import type { Patient, PatientFormData } from "./types/patient";
 
 function App() {
@@ -10,6 +11,9 @@ function App() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [apiStatus, setApiStatus] = useState<string>("檢查中...");
+  const [activeTab, setActiveTab] = useState<"basic-info" | "patient-records">(
+    "basic-info"
+  );
 
   // 載入所有病患記錄
   const loadPatients = async () => {
@@ -121,7 +125,7 @@ function App() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-8">
-          醫療記錄系統 - CRUD 管理
+          醫療記錄系統
         </h1>
 
         {/* 系統狀態 */}
@@ -134,53 +138,86 @@ function App() {
           </p>
         </div>
 
-        {/* 操作按鈕 */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {showForm ? "隱藏表單" : "新增病患記錄"}
-          </button>
-          <button
-            onClick={loadPatients}
-            disabled={loading}
-            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-          >
-            {loading ? "載入中..." : "重新載入"}
-          </button>
+        {/* 分頁導航 */}
+        <div className="mb-8">
+          <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+            <button
+              onClick={() => setActiveTab("basic-info")}
+              className={`px-6 py-3 font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                activeTab === "basic-info"
+                  ? "bg-blue-600 text-white focus:ring-blue-500"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500"
+              }`}
+            >
+              病人基本檔查詢
+            </button>
+            <button
+              onClick={() => setActiveTab("patient-records")}
+              className={`px-6 py-3 font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                activeTab === "patient-records"
+                  ? "bg-blue-600 text-white focus:ring-blue-500"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500"
+              }`}
+            >
+              病患記錄管理
+            </button>
+          </nav>
         </div>
 
-        {/* 表單區域 */}
-        {showForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-            <PatientForm
-              onSubmit={handleFormSubmit}
-              initialData={
-                editingPatient
-                  ? {
-                      name: editingPatient.name,
-                      age: editingPatient.age,
-                      phone: editingPatient.phone,
-                      diagnosis: editingPatient.diagnosis,
-                    }
-                  : undefined
-              }
-              isEditing={!!editingPatient}
-              onCancel={handleCancel}
-            />
-          </div>
+        {/* 內容區域 */}
+        {activeTab === "basic-info" && <PatientBasicInfoSearch />}
+
+        {activeTab === "patient-records" && (
+          <>
+            {/* 操作按鈕 */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                {showForm ? "隱藏表單" : "新增病患記錄"}
+              </button>
+              <button
+                onClick={loadPatients}
+                disabled={loading}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                {loading ? "載入中..." : "重新載入"}
+              </button>
+            </div>
+
+            {/* 表單區域 */}
+            {showForm && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+                <PatientForm
+                  onSubmit={handleFormSubmit}
+                  initialData={
+                    editingPatient
+                      ? {
+                          name: editingPatient.name,
+                          age: editingPatient.age,
+                          phone: editingPatient.phone,
+                          diagnosis: editingPatient.diagnosis,
+                        }
+                      : undefined
+                  }
+                  isEditing={!!editingPatient}
+                  onCancel={handleCancel}
+                />
+              </div>
+            )}
+
+            {/* 列表區域 */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <PatientList
+                patients={patients}
+                onEdit={handleEditPatient}
+                onDelete={handleDeletePatient}
+                loading={loading}
+              />
+            </div>
+          </>
         )}
-
-        {/* 列表區域 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <PatientList
-            patients={patients}
-            onEdit={handleEditPatient}
-            onDelete={handleDeletePatient}
-            loading={loading}
-          />
-        </div>
       </div>
     </div>
   );

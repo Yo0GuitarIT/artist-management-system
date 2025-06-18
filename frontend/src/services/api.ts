@@ -1,5 +1,9 @@
 import axios from "axios";
 import type { Patient, ApiResponse, PatientFormData } from "../types/patient";
+import type {
+  PatientBasicInfo,
+  PatientBasicInfoResponse,
+} from "../types/patientBasicInfo";
 
 // 建立 axios 實例
 const api = axios.create({
@@ -81,6 +85,34 @@ export const apiService = {
     // 刪除病患記錄
     delete: async (id: number): Promise<ApiResponse<Patient>> => {
       const response = await api.delete(`/patients/${id}`);
+      return response.data;
+    },
+  },
+
+  // 病人基本檔操作
+  patientBasicInfo: {
+    // 根據病歷號查詢病人基本資料
+    getByMrn: async (mrn: string): Promise<PatientBasicInfoResponse> => {
+      const response = await api.get(`/patient-basic-info/${mrn}`);
+      return response.data;
+    },
+
+    // 新增病人基本資料
+    create: async (
+      patientData: Omit<PatientBasicInfo, "id" | "createdAt" | "updatedAt">
+    ): Promise<PatientBasicInfoResponse> => {
+      const response = await api.post("/patient-basic-info", patientData);
+      return response.data;
+    },
+
+    // 更新病人基本資料
+    update: async (
+      mrn: string,
+      patientData: Partial<
+        Omit<PatientBasicInfo, "id" | "mrn" | "createdAt" | "updatedAt">
+      >
+    ): Promise<PatientBasicInfoResponse> => {
+      const response = await api.put(`/patient-basic-info/${mrn}`, patientData);
       return response.data;
     },
   },

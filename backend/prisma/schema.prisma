@@ -25,3 +25,33 @@ model Patient {
 
   @@map("patients")
 }
+
+model PatientBasicInfo {
+  id                    Int      @id @default(autoincrement())
+  mrn                   String   @unique // 病歷號
+  ptName                String   // 病人姓名
+  ptNameFull            String?  // 病人全名
+  birthDate             DateTime? // 出生日期
+  gender                String?  // 性別代碼
+  genderName            String?  // 性別名稱
+  maritalStatus         String?  // 婚姻狀況代碼
+  maritalStatusName     String?  // 婚姻狀況名稱
+  email                 String?  // 電子郵件
+  educationNo           String?  // 教育程度代碼
+  educationNoName       String?  // 教育程度名稱
+  lowIncome             String?  // 低收入戶代碼
+  lowIncomeName         String?  // 低收入戶名稱
+  nationalityCode       String?  // 國籍代碼
+  nationalityCodeName   String?  // 國籍名稱
+  mainLang              String?  // 主要語言代碼
+  mainLangName          String?  // 主要語言名稱
+  religion              String?  // 宗教代碼
+  religionName          String?  // 宗教名稱
+  idType                String?  // 身份證類型代碼
+  idTypeName            String?  // 身份證類型名稱
+  idNo                  String?  // 身份證號
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("patient_basic_info")
+}
