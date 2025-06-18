@@ -135,6 +135,10 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
       const basicInfoUpdate: any = {};
 
       // 同步更新基本檔案中的相關欄位
+      if (patientDetailData.ptName !== undefined) {
+        basicInfoUpdate.ptName = patientDetailData.ptName;
+      }
+
       if (patientDetailData.fullName !== undefined) {
         basicInfoUpdate.ptNameFull = patientDetailData.fullName;
       }

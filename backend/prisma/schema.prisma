@@ -53,6 +53,7 @@ model PatientDetail {
   mrn                   String   @unique // 病歷號 (外鍵)
   
   // 基本資料區塊
+  ptName                String?  // 病人姓名
   fullName              String?  // 全名
   birthDate             DateTime? // 出生日期
   biologicalGender      String?  // 生理性別代號

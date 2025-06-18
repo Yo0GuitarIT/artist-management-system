@@ -32,6 +32,7 @@ export interface PatientBasicInfo {
 export interface PatientDetail {
   id: number;
   mrn: string;
+  ptName?: string; // 病人姓名（可編輯）
   fullName?: string;
   birthDate?: string;
   biologicalGender?: string;

@@ -101,12 +101,20 @@ export default function PatientManagement() {
         // 如果有明細資料則設定，否則建立空白明細資料
         if (basicResponse.data.patientDetail) {
           setPatientDetail(basicResponse.data.patientDetail);
-          setEditingDetail(basicResponse.data.patientDetail);
+          // 確保明細資料包含姓名
+          const detailWithName = {
+            ...basicResponse.data.patientDetail,
+            ptName:
+              basicResponse.data.patientDetail.ptName ||
+              basicResponse.data.ptName,
+          };
+          setEditingDetail(detailWithName);
         } else {
           // 建立空白明細資料供編輯
           const emptyDetail: PatientDetail = {
             id: 0,
             mrn: searchMrn.trim(),
+            ptName: basicResponse.data.ptName, // 包含姓名
             fullName:
               basicResponse.data.ptNameFull || basicResponse.data.ptName,
             birthDate: basicResponse.data.birthDate,
@@ -173,6 +181,25 @@ export default function PatientManagement() {
   const handleCancel = () => {
     if (patientDetail) {
       setEditingDetail(patientDetail);
+    } else if (patientBasicInfo) {
+      // 重新建立空白明細資料
+      const emptyDetail: PatientDetail = {
+        id: 0,
+        mrn: searchMrn,
+        ptName: patientBasicInfo.ptName,
+        fullName: patientBasicInfo.ptNameFull || patientBasicInfo.ptName,
+        birthDate: patientBasicInfo.birthDate,
+        biologicalGender: "",
+        maritalStatus: "",
+        bloodTypeABO: "",
+        bloodTypeRH: "",
+        email: "",
+        educationLevel: "",
+        incomeLevel: "",
+        createdAt: "",
+        updatedAt: "",
+      };
+      setEditingDetail(emptyDetail);
     } else {
       setEditingDetail(null);
     }
@@ -403,9 +430,14 @@ export default function PatientManagement() {
                   </label>
                   <input
                     type="text"
-                    value={patientBasicInfo?.ptName || ""}
-                    disabled
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-600 dark:border-gray-600 dark:text-white"
+                    value={editingDetail.ptName || ""}
+                    onChange={(e) =>
+                      setEditingDetail({
+                        ...editingDetail,
+                        ptName: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
                 <div>
