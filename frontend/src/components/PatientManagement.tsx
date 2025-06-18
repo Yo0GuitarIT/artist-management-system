@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
-import { apiService } from "../services/api";
+import { useState, useEffect, useMemo } from "react";
 import type {
-  PatientBasicInfo,
   PatientDetail,
   PatientNationality,
   CodeOption,
 } from "../types/patientBasicInfo";
+import {
+  usePatientBasicInfo,
+  useCodeOptions,
+  useUpdatePatientDetail,
+} from "../hooks/usePatientQueries";
 import PatientInfoCard from "./PatientInfoCard";
 import PatientDetailEditCard from "./PatientDetailEditCard";
 import PatientNationalityCard from "./PatientNationalityCard";
@@ -23,15 +26,8 @@ interface CodeOptionsMap {
 export default function PatientManagement() {
   // 搜尋相關狀態
   const [searchMrn, setSearchMrn] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [searchedMrn, setSearchedMrn] = useState<string>("");
   const [error, setError] = useState<string>("");
-
-  // 病人資料狀態
-  const [patientBasicInfo, setPatientBasicInfo] =
-    useState<PatientBasicInfo | null>(null);
-  const [patientDetail, setPatientDetail] = useState<PatientDetail | null>(
-    null
-  );
 
   // 編輯表單狀態
   const [editingDetail, setEditingDetail] = useState<PatientDetail | null>(
@@ -41,51 +37,88 @@ export default function PatientManagement() {
     PatientNationality[]
   >([]);
 
-  // 代號選項
-  const [codeOptions, setCodeOptions] = useState<CodeOptionsMap>({
-    biological_gender: [],
-    marital_status: [],
-    blood_type_abo: [],
-    blood_type_rh: [],
-    education_level: [],
-    income_level: [],
-    nationality: [],
-  });
+  // TanStack Query hooks
+  const patientQuery = usePatientBasicInfo(searchedMrn || null);
+  const biologicalGenderQuery = useCodeOptions("biological_gender");
+  const maritalStatusQuery = useCodeOptions("marital_status");
+  const bloodTypeABOQuery = useCodeOptions("blood_type_abo");
+  const bloodTypeRHQuery = useCodeOptions("blood_type_rh");
+  const educationLevelQuery = useCodeOptions("education_level");
+  const incomeLevelQuery = useCodeOptions("income_level");
+  const nationalityQuery = useCodeOptions("nationality");
 
-  // 載入代號選項
+  const updatePatientMutation = useUpdatePatientDetail();
+
+  // 組合代號選項
+  const codeOptions: CodeOptionsMap = useMemo(
+    () => ({
+      biological_gender: biologicalGenderQuery.data?.data || [],
+      marital_status: maritalStatusQuery.data?.data || [],
+      blood_type_abo: bloodTypeABOQuery.data?.data || [],
+      blood_type_rh: bloodTypeRHQuery.data?.data || [],
+      education_level: educationLevelQuery.data?.data || [],
+      income_level: incomeLevelQuery.data?.data || [],
+      nationality: nationalityQuery.data?.data || [],
+    }),
+    [
+      biologicalGenderQuery.data,
+      maritalStatusQuery.data,
+      bloodTypeABOQuery.data,
+      bloodTypeRHQuery.data,
+      educationLevelQuery.data,
+      incomeLevelQuery.data,
+      nationalityQuery.data,
+    ]
+  );
+
+  // 當病人資料載入完成時，設置編輯狀態
   useEffect(() => {
-    const loadCodeOptions = async () => {
-      try {
-        const categories = [
-          "biological_gender",
-          "marital_status",
-          "blood_type_abo",
-          "blood_type_rh",
-          "education_level",
-          "income_level",
-          "nationality",
-        ];
+    if (patientQuery.data?.success && patientQuery.data.data) {
+      const basicInfo = patientQuery.data.data;
 
-        const optionsMap: Partial<CodeOptionsMap> = {};
-
-        for (const category of categories) {
-          const response = await apiService.codeOptions.getByCategory(category);
-          if (response.success && response.data) {
-            optionsMap[category as keyof CodeOptionsMap] = response.data;
-          }
-        }
-
-        setCodeOptions(optionsMap as CodeOptionsMap);
-      } catch (error) {
-        console.error("載入代號選項失敗:", error);
+      if (basicInfo.patientDetail) {
+        // 確保明細資料包含姓名
+        const detailWithName = {
+          ...basicInfo.patientDetail,
+          ptName: basicInfo.patientDetail.ptName || basicInfo.ptName,
+        };
+        setEditingDetail(detailWithName);
+        setEditingNationalities(basicInfo.patientDetail.nationalities || []);
+      } else {
+        // 建立空白明細資料供編輯
+        const emptyDetail: PatientDetail = {
+          id: 0,
+          mrn: searchedMrn,
+          ptName: basicInfo.ptName,
+          fullName: basicInfo.ptNameFull || basicInfo.ptName,
+          birthDate: basicInfo.birthDate,
+          biologicalGender: "",
+          maritalStatus: "",
+          bloodTypeABO: "",
+          bloodTypeRH: "",
+          email: "",
+          educationLevel: "",
+          incomeLevel: "",
+          createdAt: "",
+          updatedAt: "",
+          nationalities: [],
+        };
+        setEditingDetail(emptyDetail);
+        setEditingNationalities([]);
       }
-    };
+    }
+  }, [patientQuery.data, searchedMrn]);
 
-    loadCodeOptions();
-  }, []);
+  // 從查詢中提取資料和狀態
+  const patientBasicInfo = patientQuery.data?.success
+    ? patientQuery.data.data
+    : null;
+  const patientDetail = patientBasicInfo?.patientDetail || null;
+  const isQueryLoading = patientQuery.isLoading;
+  const isSaving = updatePatientMutation.isPending;
 
   // 搜尋功能
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!searchMrn.trim()) {
@@ -93,114 +126,42 @@ export default function PatientManagement() {
       return;
     }
 
-    setLoading(true);
     setError("");
-    setPatientBasicInfo(null);
-    setPatientDetail(null);
-    setEditingDetail(null);
-
-    try {
-      // 查詢病人基本資料（包含明細資料）
-      const basicResponse = await apiService.patientBasicInfo.getByMrn(
-        searchMrn.trim()
-      );
-
-      if (basicResponse.success && basicResponse.data) {
-        setPatientBasicInfo(basicResponse.data);
-
-        // 如果有明細資料則設定，否則建立空白明細資料
-        if (basicResponse.data.patientDetail) {
-          setPatientDetail(basicResponse.data.patientDetail);
-          // 確保明細資料包含姓名
-          const detailWithName = {
-            ...basicResponse.data.patientDetail,
-            ptName:
-              basicResponse.data.patientDetail.ptName ||
-              basicResponse.data.ptName,
-          };
-          setEditingDetail(detailWithName);
-          // 設置編輯中的國籍資料
-          setEditingNationalities(
-            basicResponse.data.patientDetail.nationalities || []
-          );
-        } else {
-          // 建立空白明細資料供編輯
-          const emptyDetail: PatientDetail = {
-            id: 0,
-            mrn: searchMrn.trim(),
-            ptName: basicResponse.data.ptName, // 包含姓名
-            fullName:
-              basicResponse.data.ptNameFull || basicResponse.data.ptName,
-            birthDate: basicResponse.data.birthDate,
-            biologicalGender: "",
-            maritalStatus: "",
-            bloodTypeABO: "",
-            bloodTypeRH: "",
-            email: "",
-            educationLevel: "",
-            incomeLevel: "",
-            createdAt: "",
-            updatedAt: "",
-            nationalities: [], // 初始化為空陣列
-          };
-          setEditingDetail(emptyDetail);
-          setEditingNationalities([]); // 初始化編輯中的國籍資料
-        }
-      } else {
-        setError(basicResponse.message || "查詢失敗");
-      }
-    } catch (error) {
-      console.error("查詢病人資料失敗:", error);
-      setError("查詢病人資料失敗，請檢查網路連線或稍後再試");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 儲存基本資料
-  const handleSave = async () => {
+    setSearchedMrn(searchMrn.trim());
+  }; // 儲存基本資料
+  const handleSave = () => {
     if (!editingDetail) return;
 
-    setLoading(true);
     setError("");
 
-    try {
-      // 將國籍資料加入到編輯資料中，統一送到一個 API
-      const dataToSave = {
-        ...editingDetail,
+    // 準備 mutation 資料格式
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, nationalities, ...detailData } =
+      editingDetail;
+
+    updatePatientMutation.mutate(
+      {
+        detail: detailData,
         nationalities: editingNationalities,
-      };
-
-      const response = await apiService.patientDetail.createOrUpdate(
-        dataToSave
-      );
-
-      if (response.success && response.data) {
-        // 更新本地狀態
-        const updatedData = response.data;
-
-        setPatientDetail(updatedData);
-        setEditingDetail(updatedData);
-        setEditingNationalities(updatedData.nationalities || []);
-
-        // 重新查詢病人資料以刷新顯示
-        const basicResponse = await apiService.patientBasicInfo.getByMrn(
-          searchMrn
-        );
-        if (basicResponse.success && basicResponse.data) {
-          setPatientBasicInfo(basicResponse.data);
-        }
-
-        alert("儲存成功！");
-      } else {
-        setError(response.message || "儲存失敗");
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            // 更新本地狀態
+            const updatedData = response.data;
+            setEditingDetail(updatedData);
+            setEditingNationalities(updatedData.nationalities || []);
+            alert("儲存成功！");
+          } else {
+            setError(response.message || "儲存失敗");
+          }
+        },
+        onError: (error) => {
+          console.error("儲存病人資料失敗:", error);
+          setError("儲存失敗，請稍後再試");
+        },
       }
-    } catch (error) {
-      console.error("儲存病人資料失敗:", error);
-      setError("儲存失敗，請稍後再試");
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   // 取消編輯
@@ -265,31 +226,31 @@ export default function PatientManagement() {
                 onChange={(e) => setSearchMrn(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="請輸入病歷號"
-                disabled={loading}
+                disabled={isQueryLoading}
               />
             </div>
             <div className="flex gap-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isQueryLoading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "查詢中..." : "查詢"}
+                {isQueryLoading ? "查詢中..." : "查詢"}
               </button>
               {editingDetail && (
                 <>
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={isSaving}
                     className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? "儲存中..." : "存檔"}
+                    {isSaving ? "儲存中..." : "存檔"}
                   </button>
                   <button
                     type="button"
                     onClick={handleCancel}
-                    disabled={loading}
+                    disabled={isSaving}
                     className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     取消
@@ -310,7 +271,7 @@ export default function PatientManagement() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左側：病人資訊卡片 */}
         <div className="lg:col-span-1">
-          <PatientInfoCard patientBasicInfo={patientBasicInfo} />
+          <PatientInfoCard patientBasicInfo={patientBasicInfo || null} />
         </div>
 
         {/* 右側：基本資料和國籍資料卡片 */}
