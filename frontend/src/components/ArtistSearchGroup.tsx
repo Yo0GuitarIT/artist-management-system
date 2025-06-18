@@ -1,28 +1,21 @@
 import { useState } from "react";
+import { useArtistManagement } from "../context";
 
-interface ArtistSearchCardProps {
-  onSearch: (artistId: string) => void;
-  onSave?: () => void;
-  onCancel?: () => void;
-  isQueryLoading?: boolean;
-  isSaving?: boolean;
-  error?: string;
-  showSaveButtons?: boolean;
-}
+export default function ArtistSearchGroup() {
+  const {
+    handleSearch,
+    handleSave,
+    handleCancel,
+    isQueryLoading,
+    isSaving,
+    error,
+    editingDetail,
+  } = useArtistManagement();
 
-export default function ArtistSearchCard({
-  onSearch,
-  onSave,
-  onCancel,
-  isQueryLoading = false,
-  isSaving = false,
-  error,
-  showSaveButtons = false,
-}: ArtistSearchCardProps) {
   const [searchArtistId, setSearchArtistId] = useState<string>("");
   const [localError, setLocalError] = useState<string>("");
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!searchArtistId.trim()) {
@@ -31,10 +24,11 @@ export default function ArtistSearchCard({
     }
 
     setLocalError("");
-    onSearch(searchArtistId.trim());
+    handleSearch(searchArtistId.trim());
   };
 
   const displayError = error || localError;
+  const showSaveButtons = !!editingDetail;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -42,7 +36,7 @@ export default function ArtistSearchCard({
         藝人經紀管理系統
       </h1>
 
-      <form onSubmit={handleSearch} className="mb-4">
+      <form onSubmit={handleSubmit} className="mb-4">
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <label
@@ -73,7 +67,7 @@ export default function ArtistSearchCard({
               <>
                 <button
                   type="button"
-                  onClick={onSave}
+                  onClick={handleSave}
                   disabled={isSaving}
                   className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -81,7 +75,7 @@ export default function ArtistSearchCard({
                 </button>
                 <button
                   type="button"
-                  onClick={onCancel}
+                  onClick={handleCancel}
                   disabled={isSaving}
                   className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
