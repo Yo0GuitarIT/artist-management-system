@@ -1,7 +1,7 @@
 {
   "name": "artist-management-system",
   "version": "1.0.0",
-  "description": "藝人經紀管理系統 - 全端 TypeScript 專案",
+  "description": "藝人經紀管理系統 - Fullstack TypeScript SideProject",
   "scripts": {
     "build": "pnpm run build:backend && pnpm run build:frontend",
     "build:frontend": "cd frontend && pnpm build",
