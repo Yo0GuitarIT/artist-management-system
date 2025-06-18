@@ -1,9 +1,0 @@
-@import "tailwindcss";
-
-/* 保留一些基本的全域樣式 */
-body {
-  margin: 0;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
