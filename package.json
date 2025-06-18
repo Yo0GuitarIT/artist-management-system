@@ -1,0 +1,30 @@
+{
+  "name": "medical-record-system",
+  "version": "1.0.0",
+  "description": "醫療記錄系統 - 全端 TypeScript 專案",
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev:frontend": "cd frontend && pnpm dev",
+    "dev:backend": "cd backend && pnpm dev",
+    "build": "pnpm run build:backend && pnpm run build:frontend",
+    "build:frontend": "cd frontend && pnpm build",
+    "build:backend": "cd backend && pnpm build",
+    "install:all": "pnpm install && cd frontend && pnpm install && cd ../backend && pnpm install",
+    "clean": "rm -rf frontend/node_modules backend/node_modules node_modules frontend/dist backend/dist",
+    "start": "cd backend && pnpm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "medical-record",
+    "fullstack",
+    "typescript",
+    "react",
+    "express",
+    "vite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1"
+}
