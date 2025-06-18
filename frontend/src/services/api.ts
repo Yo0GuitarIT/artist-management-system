@@ -1,6 +1,5 @@
 import axios from "axios";
 import type {
-  PatientBasicInfo,
   PatientBasicInfoResponse,
   PatientDetail,
   PatientDetailResponse,
@@ -48,12 +47,6 @@ api.interceptors.response.use(
 
 // API 方法
 export const apiService = {
-  // 測試連接
-  testConnection: async (): Promise<ApiResponse> => {
-    const response = await api.get("/test");
-    return response.data;
-  },
-
   // 健康檢查
   healthCheck: async (): Promise<ApiResponse> => {
     const response = await axios.get("http://localhost:3001/health");
@@ -67,35 +60,10 @@ export const apiService = {
       const response = await api.get(`/patient-basic-info/${mrn}`);
       return response.data;
     },
-
-    // 新增病人基本資料
-    create: async (
-      patientData: Omit<PatientBasicInfo, "id" | "createdAt" | "updatedAt">
-    ): Promise<PatientBasicInfoResponse> => {
-      const response = await api.post("/patient-basic-info", patientData);
-      return response.data;
-    },
-
-    // 更新病人基本資料
-    update: async (
-      mrn: string,
-      patientData: Partial<
-        Omit<PatientBasicInfo, "id" | "mrn" | "createdAt" | "updatedAt">
-      >
-    ): Promise<PatientBasicInfoResponse> => {
-      const response = await api.put(`/patient-basic-info/${mrn}`, patientData);
-      return response.data;
-    },
   },
 
   // 病人明細資料操作
   patientDetail: {
-    // 根據病歷號查詢病人明細資料
-    getByMrn: async (mrn: string): Promise<PatientDetailResponse> => {
-      const response = await api.get(`/patient-detail/${mrn}`);
-      return response.data;
-    },
-
     // 新增或更新病人明細資料
     createOrUpdate: async (
       patientDetailData: Omit<PatientDetail, "id" | "createdAt" | "updatedAt">
@@ -107,12 +75,6 @@ export const apiService = {
 
   // 代號選項操作
   codeOptions: {
-    // 取得所有代號選項
-    getAll: async (): Promise<CodeOptionsResponse> => {
-      const response = await api.get("/code-options");
-      return response.data;
-    },
-
     // 根據分類取得代號選項
     getByCategory: async (category: string): Promise<CodeOptionsResponse> => {
       const response = await api.get(`/code-options/${category}`);
