@@ -68,11 +68,13 @@ pnpm dev
 ### 方法三：手動啟動
 
 1. 啟動後端伺服器：
+
 ```bash
 pnpm run dev:backend
 ```
 
 2. 在新終端啟動前端：
+
 ```bash
 pnpm run dev:frontend
 ```
@@ -80,16 +82,19 @@ pnpm run dev:frontend
 ## 專案管理腳本
 
 ### 開發
+
 - `pnpm dev` - 同時啟動前後端開發伺服器
 - `pnpm run dev:frontend` - 只啟動前端
 - `pnpm run dev:backend` - 只啟動後端
 
 ### 建置
+
 - `pnpm build` - 建置整個專案
 - `pnpm run build:frontend` - 只建置前端
 - `pnpm run build:backend` - 只建置後端
 
 ### 其他
+
 - `pnpm run install:all` - 安裝所有依賴
 - `pnpm clean` - 清理所有 node_modules 和 build 檔案
 - `pnpm start` - 啟動生產環境後端
