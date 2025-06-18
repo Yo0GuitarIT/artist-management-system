@@ -41,5 +41,49 @@ model PatientBasicInfo {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
+  // 關聯到病人明細資料
+  patientDetail         PatientDetail?
+
   @@map("patient_basic_info")
+}
+
+// 病人明細資料表
+model PatientDetail {
+  id                    Int      @id @default(autoincrement())
+  mrn                   String   @unique // 病歷號 (外鍵)
+  
+  // 基本資料區塊
+  fullName              String?  // 全名
+  birthDate             DateTime? // 出生日期
+  biologicalGender      String?  // 生理性別代號
+  maritalStatus         String?  // 婚姻狀況代號
+  bloodTypeABO          String?  // ABO血型代號
+  bloodTypeRH           String?  // RH血型代號
+  email                 String?  // 電子郵件
+  educationLevel        String?  // 教育程度代號
+  incomeLevel           String?  // 低/中收入戶代號
+  
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // 關聯到基本資料表
+  patientBasicInfo      PatientBasicInfo @relation(fields: [mrn], references: [mrn], onDelete: Cascade)
+
+  @@map("patient_detail")
+}
+
+// 代號選項對照表
+model CodeOption {
+  id                    Int      @id @default(autoincrement())
+  category              String   // 分類 (例如: gender, marital, bloodType, education, income)
+  code                  String   // 代號
+  name                  String   // 選項名稱
+  description           String?  // 描述
+  displayOrder          Int?     // 顯示順序
+  isActive              Boolean  @default(true) // 是否啟用
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@unique([category, code])
+  @@map("code_option")
 }

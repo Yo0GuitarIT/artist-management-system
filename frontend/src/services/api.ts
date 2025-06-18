@@ -2,6 +2,9 @@ import axios from "axios";
 import type {
   PatientBasicInfo,
   PatientBasicInfoResponse,
+  PatientDetail,
+  PatientDetailResponse,
+  CodeOptionsResponse,
 } from "../types/patientBasicInfo";
 
 // 基本 API 回應型別
@@ -81,6 +84,38 @@ export const apiService = {
       >
     ): Promise<PatientBasicInfoResponse> => {
       const response = await api.put(`/patient-basic-info/${mrn}`, patientData);
+      return response.data;
+    },
+  },
+
+  // 病人明細資料操作
+  patientDetail: {
+    // 根據病歷號查詢病人明細資料
+    getByMrn: async (mrn: string): Promise<PatientDetailResponse> => {
+      const response = await api.get(`/patient-detail/${mrn}`);
+      return response.data;
+    },
+
+    // 新增或更新病人明細資料
+    createOrUpdate: async (
+      patientDetailData: Omit<PatientDetail, "id" | "createdAt" | "updatedAt">
+    ): Promise<PatientDetailResponse> => {
+      const response = await api.post("/patient-detail", patientDetailData);
+      return response.data;
+    },
+  },
+
+  // 代號選項操作
+  codeOptions: {
+    // 取得所有代號選項
+    getAll: async (): Promise<CodeOptionsResponse> => {
+      const response = await api.get("/code-options");
+      return response.data;
+    },
+
+    // 根據分類取得代號選項
+    getByCategory: async (category: string): Promise<CodeOptionsResponse> => {
+      const response = await api.get(`/code-options/${category}`);
       return response.data;
     },
   },

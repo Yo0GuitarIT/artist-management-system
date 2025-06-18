@@ -34,6 +34,9 @@ app.get("/api/patient-basic-info/:mrn", async (req: Request, res: Response) => {
 
     const patientBasicInfo = await prisma.patientBasicInfo.findUnique({
       where: { mrn },
+      include: {
+        patientDetail: true, // 包含明細資料
+      },
     });
 
     if (!patientBasicInfo) {
@@ -146,6 +149,208 @@ app.put("/api/patient-basic-info/:mrn", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "更新病人基本資料時發生錯誤",
+    });
+  }
+});
+
+// 取得所有代號選項
+app.get("/api/code-options", async (req: Request, res: Response) => {
+  try {
+    const { category } = req.query;
+
+    let codeOptions;
+    if (category) {
+      codeOptions = await prisma.codeOption.findMany({
+        where: {
+          category: category as string,
+          isActive: true,
+        },
+        orderBy: { displayOrder: "asc" },
+      });
+    } else {
+      codeOptions = await prisma.codeOption.findMany({
+        where: { isActive: true },
+        orderBy: [{ category: "asc" }, { displayOrder: "asc" }],
+      });
+    }
+
+    res.json({
+      success: true,
+      data: codeOptions,
+    });
+  } catch (error) {
+    console.error("Error fetching code options:", error);
+    res.status(500).json({
+      success: false,
+      message: "查詢代號選項時發生錯誤",
+    });
+  }
+});
+
+// 取得特定分類的代號選項
+app.get("/api/code-options/:category", async (req: Request, res: Response) => {
+  try {
+    const category = req.params.category;
+
+    const codeOptions = await prisma.codeOption.findMany({
+      where: {
+        category,
+        isActive: true,
+      },
+      orderBy: { displayOrder: "asc" },
+    });
+
+    res.json({
+      success: true,
+      data: codeOptions,
+    });
+  } catch (error) {
+    console.error("Error fetching code options by category:", error);
+    res.status(500).json({
+      success: false,
+      message: "查詢代號選項時發生錯誤",
+    });
+  }
+});
+
+// 根據病歷號查詢病人明細資料
+app.get("/api/patient-detail/:mrn", async (req: Request, res: Response) => {
+  try {
+    const mrn = req.params.mrn;
+
+    const patientDetail = await prisma.patientDetail.findUnique({
+      where: { mrn },
+    });
+
+    if (!patientDetail) {
+      res.status(404).json({
+        success: false,
+        message: "找不到病歷號對應的病人明細資料",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: patientDetail,
+    });
+  } catch (error) {
+    console.error("Error fetching patient detail:", error);
+    res.status(500).json({
+      success: false,
+      message: "查詢病人明細資料時發生錯誤",
+    });
+  }
+});
+
+// 新增或更新病人明細資料
+app.post("/api/patient-detail", async (req: Request, res: Response) => {
+  try {
+    const patientDetailData = req.body;
+
+    // 檢查必要欄位
+    if (!patientDetailData.mrn) {
+      res.status(400).json({
+        success: false,
+        message: "請提供病歷號",
+      });
+      return;
+    }
+
+    // 檢查對應的基本資料是否存在
+    const existingPatientBasic = await prisma.patientBasicInfo.findUnique({
+      where: { mrn: patientDetailData.mrn },
+    });
+
+    if (!existingPatientBasic) {
+      res.status(400).json({
+        success: false,
+        message: "找不到對應的病人基本資料",
+      });
+      return;
+    }
+
+    // 處理日期格式
+    if (patientDetailData.birthDate) {
+      patientDetailData.birthDate = new Date(patientDetailData.birthDate);
+    }
+
+    // 使用 transaction 來同時更新明細資料和基本檔案
+    const result = await prisma.$transaction(async (tx) => {
+      // 更新或創建明細資料
+      const patientDetail = await tx.patientDetail.upsert({
+        where: { mrn: patientDetailData.mrn },
+        update: patientDetailData,
+        create: patientDetailData,
+      });
+
+      // 獲取代號選項來更新基本檔案中的名稱欄位
+      const getCodeOptionName = async (category: string, code: string) => {
+        if (!code) return '';
+        const option = await tx.codeOption.findUnique({
+          where: { category_code: { category, code } },
+        });
+        return option?.name || code;
+      };
+
+      // 準備基本檔案更新資料
+      const basicInfoUpdate: any = {};
+
+      // 同步更新基本檔案中的相關欄位
+      if (patientDetailData.fullName !== undefined) {
+        basicInfoUpdate.ptNameFull = patientDetailData.fullName;
+      }
+
+      if (patientDetailData.birthDate !== undefined) {
+        basicInfoUpdate.birthDate = patientDetailData.birthDate;
+      }
+
+      if (patientDetailData.email !== undefined) {
+        basicInfoUpdate.email = patientDetailData.email;
+      }
+
+      // 更新代號相關欄位
+      if (patientDetailData.biologicalGender !== undefined) {
+        basicInfoUpdate.gender = patientDetailData.biologicalGender;
+        basicInfoUpdate.genderName = await getCodeOptionName('biological_gender', patientDetailData.biologicalGender);
+      }
+
+      if (patientDetailData.maritalStatus !== undefined) {
+        basicInfoUpdate.maritalStatus = patientDetailData.maritalStatus;
+        basicInfoUpdate.maritalStatusName = await getCodeOptionName('marital_status', patientDetailData.maritalStatus);
+      }
+
+      if (patientDetailData.educationLevel !== undefined) {
+        basicInfoUpdate.educationNo = patientDetailData.educationLevel;
+        basicInfoUpdate.educationNoName = await getCodeOptionName('education_level', patientDetailData.educationLevel);
+      }
+
+      if (patientDetailData.incomeLevel !== undefined) {
+        basicInfoUpdate.lowIncome = patientDetailData.incomeLevel;
+        basicInfoUpdate.lowIncomeName = await getCodeOptionName('income_level', patientDetailData.incomeLevel);
+      }
+
+      // 更新基本檔案
+      if (Object.keys(basicInfoUpdate).length > 0) {
+        await tx.patientBasicInfo.update({
+          where: { mrn: patientDetailData.mrn },
+          data: basicInfoUpdate,
+        });
+      }
+
+      return patientDetail;
+    });
+
+    res.json({
+      success: true,
+      message: "病人明細資料更新成功，基本檔案已同步更新",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error creating/updating patient detail:", error);
+    res.status(500).json({
+      success: false,
+      message: "處理病人明細資料時發生錯誤",
     });
   }
 });
