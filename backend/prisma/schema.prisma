@@ -72,6 +72,12 @@ model ArtistDetail {
   
   // 關聯到國籍資料
   nationalities         ArtistNationality[]
+  
+  // 關聯到語言資料
+  languages             ArtistLanguage[]
+  
+  // 關聯到宗教資料
+  religions             ArtistReligion[]
 
   @@map("artist_detail")
 }
@@ -89,6 +95,36 @@ model ArtistNationality {
   artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
 
   @@map("artist_nationality")
+}
+
+// 藝人語言資料表
+model ArtistLanguage {
+  id                    Int      @id @default(autoincrement())
+  artistId              String   // 藝人編號 (外鍵)
+  languageCode          String   // 語言代碼
+  isPrimary             Boolean  @default(false) // 是否為主要語言
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // 關聯到藝人明細資料
+  artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
+
+  @@map("artist_language")
+}
+
+// 藝人宗教資料表
+model ArtistReligion {
+  id                    Int      @id @default(autoincrement())
+  artistId              String   // 藝人編號 (外鍵)
+  religionCode          String   // 宗教代碼
+  isPrimary             Boolean  @default(false) // 是否為主要宗教
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // 關聯到藝人明細資料
+  artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
+
+  @@map("artist_religion")
 }
 
 // 代號選項對照表

@@ -1,9 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "../services/api";
-import type { ArtistDetail, ArtistNationality } from "../types/artistBasicInfo";
+import type {
+  ArtistDetail,
+  ArtistNationality,
+  ArtistLanguage,
+  ArtistReligion,
+} from "../types/artistBasicInfo";
 import { QUERY_KEYS } from "./useArtistQueries";
 
-// 更新藝人明細資料（包含國籍）
+// 更新藝人明細資料（包含國籍、語言、宗教）
 export function useUpdateArtistDetail() {
   const queryClient = useQueryClient();
 
@@ -11,10 +16,14 @@ export function useUpdateArtistDetail() {
     mutationFn: async (data: {
       detail: Omit<ArtistDetail, "id" | "createdAt" | "updatedAt">;
       nationalities: ArtistNationality[];
+      languages: ArtistLanguage[];
+      religions: ArtistReligion[];
     }) => {
       const dataToSave = {
         ...data.detail,
         nationalities: data.nationalities,
+        languages: data.languages,
+        religions: data.religions,
       };
       return apiService.artistDetail.createOrUpdate(dataToSave);
     },

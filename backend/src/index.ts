@@ -35,6 +35,8 @@ app.get(
           artistDetail: {
             include: {
               nationalities: true, // 包含國籍資料
+              languages: true, // 包含語言資料
+              religions: true, // 包含宗教資料
             },
           },
         },
@@ -121,7 +123,7 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
     }
 
     // 從 artistDetailData 中排除關聯欄位，只保留 ArtistDetail 表的直接欄位
-    const { nationalities, ...artistDetailFields } = artistDetailData;
+    const { nationalities, languages, religions, ...artistDetailFields } = artistDetailData;
 
     // 使用 transaction 來同時更新明細資料、國籍資料和基本檔案
     const result = await prisma.$transaction(async (tx) => {
@@ -132,6 +134,8 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
         create: artistDetailFields,
         include: {
           nationalities: true, // 包含國籍資料在回傳結果中
+          languages: true, // 包含語言資料在回傳結果中
+          religions: true, // 包含宗教資料在回傳結果中
         },
       });
 
@@ -173,6 +177,90 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
               },
             });
             savedNationalities.push(created);
+          }
+        }
+      }
+
+      // 處理語言資料（如果有提供）
+      let savedLanguages = artistDetail.languages;
+      if (languages && Array.isArray(languages)) {
+        // 先刪除該藝人的所有現有語言資料（除了要保留的已存在記錄）
+        const existingLanguageIds = languages
+          .filter((l: any) => l.id && l.id < 1000000000)
+          .map((l: any) => l.id);
+
+        await tx.artistLanguage.deleteMany({
+          where: {
+            artistId: artistDetailFields.artistId,
+            id: { notIn: existingLanguageIds },
+          },
+        });
+
+        // 處理每一筆語言資料
+        savedLanguages = [];
+        for (const language of languages) {
+          if (language.id && language.id < 1000000000) {
+            // 更新現有記錄
+            const updated = await tx.artistLanguage.update({
+              where: { id: language.id },
+              data: {
+                languageCode: language.languageCode,
+                isPrimary: language.isPrimary,
+              },
+            });
+            savedLanguages.push(updated);
+          } else {
+            // 新增記錄
+            const created = await tx.artistLanguage.create({
+              data: {
+                artistId: artistDetailFields.artistId,
+                languageCode: language.languageCode,
+                isPrimary: language.isPrimary,
+              },
+            });
+            savedLanguages.push(created);
+          }
+        }
+      }
+
+      // 處理宗教資料（如果有提供）
+      let savedReligions = artistDetail.religions;
+      if (religions && Array.isArray(religions)) {
+        // 先刪除該藝人的所有現有宗教資料（除了要保留的已存在記錄）
+        const existingReligionIds = religions
+          .filter((r: any) => r.id && r.id < 1000000000)
+          .map((r: any) => r.id);
+
+        await tx.artistReligion.deleteMany({
+          where: {
+            artistId: artistDetailFields.artistId,
+            id: { notIn: existingReligionIds },
+          },
+        });
+
+        // 處理每一筆宗教資料
+        savedReligions = [];
+        for (const religion of religions) {
+          if (religion.id && religion.id < 1000000000) {
+            // 更新現有記錄
+            const updated = await tx.artistReligion.update({
+              where: { id: religion.id },
+              data: {
+                religionCode: religion.religionCode,
+                isPrimary: religion.isPrimary,
+              },
+            });
+            savedReligions.push(updated);
+          } else {
+            // 新增記錄
+            const created = await tx.artistReligion.create({
+              data: {
+                artistId: artistDetailFields.artistId,
+                religionCode: religion.religionCode,
+                isPrimary: religion.isPrimary,
+              },
+            });
+            savedReligions.push(created);
           }
         }
       }
@@ -262,6 +350,52 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
         basicInfoUpdate.nationalityCodeName = null;
       }
 
+      // 處理語言資料同步到基本檔案
+      if (savedLanguages && savedLanguages.length > 0) {
+        const primaryLanguage = savedLanguages.find(
+          (l: any) => l.isPrimary
+        );
+
+        if (primaryLanguage) {
+          basicInfoUpdate.mainLang = primaryLanguage.languageCode;
+          basicInfoUpdate.mainLangName = await getCodeOptionName(
+            "language",
+            primaryLanguage.languageCode
+          );
+        } else {
+          // 沒有主要語言，清空基本檔案的語言資料
+          basicInfoUpdate.mainLang = null;
+          basicInfoUpdate.mainLangName = null;
+        }
+      } else if (languages !== undefined) {
+        // 如果明確傳入空陣列，清空基本檔案的語言資料
+        basicInfoUpdate.mainLang = null;
+        basicInfoUpdate.mainLangName = null;
+      }
+
+      // 處理宗教資料同步到基本檔案
+      if (savedReligions && savedReligions.length > 0) {
+        const primaryReligion = savedReligions.find(
+          (r: any) => r.isPrimary
+        );
+
+        if (primaryReligion) {
+          basicInfoUpdate.religion = primaryReligion.religionCode;
+          basicInfoUpdate.religionName = await getCodeOptionName(
+            "religion",
+            primaryReligion.religionCode
+          );
+        } else {
+          // 沒有主要宗教，清空基本檔案的宗教資料
+          basicInfoUpdate.religion = null;
+          basicInfoUpdate.religionName = null;
+        }
+      } else if (religions !== undefined) {
+        // 如果明確傳入空陣列，清空基本檔案的宗教資料
+        basicInfoUpdate.religion = null;
+        basicInfoUpdate.religionName = null;
+      }
+
       // 更新基本檔案
       if (Object.keys(basicInfoUpdate).length > 0) {
         await tx.artistBasicInfo.update({
@@ -274,6 +408,8 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
       return {
         ...artistDetail,
         nationalities: savedNationalities,
+        languages: savedLanguages,
+        religions: savedReligions,
       };
     });
 

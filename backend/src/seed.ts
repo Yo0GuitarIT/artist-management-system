@@ -156,6 +156,41 @@ async function seedCodeOptions() {
       },
     ];
 
+    // 語言選項
+    const languageOptions = [
+      { category: "language", code: "zh", name: "中文", displayOrder: 1 },
+      { category: "language", code: "en", name: "英文", displayOrder: 2 },
+      { category: "language", code: "ja", name: "日文", displayOrder: 3 },
+      { category: "language", code: "es", name: "西班牙文", displayOrder: 4 },
+      { category: "language", code: "ko", name: "韓文", displayOrder: 5 },
+      { category: "language", code: "other", name: "其他", displayOrder: 6 },
+    ];
+
+    // 宗教選項
+    const religionOptions = [
+      { category: "religion", code: "buddhism", name: "佛教", displayOrder: 1 },
+      { category: "religion", code: "taoism", name: "道教", displayOrder: 2 },
+      {
+        category: "religion",
+        code: "catholic",
+        name: "天主教",
+        displayOrder: 3,
+      },
+      {
+        category: "religion",
+        code: "christian",
+        name: "基督教",
+        displayOrder: 4,
+      },
+      {
+        category: "religion",
+        code: "islam",
+        name: "伊斯蘭教",
+        displayOrder: 5,
+      },
+      { category: "religion", code: "other", name: "其他", displayOrder: 6 },
+    ];
+
     // 批量新增所有選項
     const allOptions = [
       ...genderOptions,
@@ -165,6 +200,8 @@ async function seedCodeOptions() {
       ...educationOptions,
       ...incomeOptions,
       ...nationalityOptions,
+      ...languageOptions,
+      ...religionOptions,
     ];
 
     for (const option of allOptions) {

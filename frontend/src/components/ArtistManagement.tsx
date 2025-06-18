@@ -2,6 +2,8 @@ import { ArtistManagementProvider } from "../context";
 import ArtistInfoCard from "./ArtistInfoCard";
 import BasicInfoCard from "./BasicInfoCard";
 import NationalityCard from "./NationalityCard";
+import LanguageCard from "./LanguageCard";
+import ReligionCard from "./ReligionCard";
 import SearchGroup from "./SearchGroup";
 
 // 主要的管理元件內容
@@ -17,13 +19,19 @@ function ArtistManagementContent() {
           <ArtistInfoCard />
         </div>
 
-        {/* 右側：基本資料和國籍資料卡片 */}
+        {/* 右側：基本資料和其他資料卡片 */}
         <div className="lg:col-span-2 space-y-6">
           {/* 基本資料卡片 */}
           <BasicInfoCard />
 
           {/* 國籍資料卡片 */}
           <NationalityCard />
+
+          {/* 語言資料卡片 */}
+          <LanguageCard />
+
+          {/* 宗教資料卡片 */}
+          <ReligionCard />
         </div>
       </div>
     </div>

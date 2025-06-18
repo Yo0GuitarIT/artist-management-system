@@ -4,6 +4,8 @@ import type {
   ArtistBasicInfo,
   ArtistDetail,
   ArtistNationality,
+  ArtistLanguage,
+  ArtistReligion,
   CodeOption,
 } from "../types/artistBasicInfo";
 import { useArtistBasicInfo, useCodeOptions } from "../hooks/useArtistQueries";
@@ -18,6 +20,8 @@ interface CodeOptionsMap {
   education_level: CodeOption[];
   income_level: CodeOption[];
   nationality: CodeOption[];
+  language: CodeOption[];
+  religion: CodeOption[];
 }
 
 // Context 狀態介面
@@ -29,6 +33,8 @@ interface ArtistManagementState {
   // 編輯相關
   editingDetail: ArtistDetail | null;
   editingNationalities: ArtistNationality[];
+  editingLanguages: ArtistLanguage[];
+  editingReligions: ArtistReligion[];
   isSaving: boolean;
 
   // 錯誤處理
@@ -46,6 +52,8 @@ interface ArtistManagementActions {
   handleCancel: () => void;
   setEditingDetail: (detail: ArtistDetail | null) => void;
   setEditingNationalities: (nationalities: ArtistNationality[]) => void;
+  setEditingLanguages: (languages: ArtistLanguage[]) => void;
+  setEditingReligions: (religions: ArtistReligion[]) => void;
   setError: (error: string) => void;
   clearError: () => void;
   getOptionName: (category: keyof CodeOptionsMap, code: string) => string;
@@ -76,6 +84,12 @@ export function ArtistManagementProvider({
   const [editingNationalities, setEditingNationalities] = useState<
     ArtistNationality[]
   >([]);
+  const [editingLanguages, setEditingLanguages] = useState<ArtistLanguage[]>(
+    []
+  );
+  const [editingReligions, setEditingReligions] = useState<ArtistReligion[]>(
+    []
+  );
 
   // React Query hooks
   const artistQuery = useArtistBasicInfo(searchedArtistId || null);
@@ -86,6 +100,8 @@ export function ArtistManagementProvider({
   const educationLevelQuery = useCodeOptions("education_level");
   const incomeLevelQuery = useCodeOptions("income_level");
   const nationalityQuery = useCodeOptions("nationality");
+  const languageQuery = useCodeOptions("language");
+  const religionQuery = useCodeOptions("religion");
 
   const updateArtistMutation = useUpdateArtistDetail();
 
@@ -99,6 +115,8 @@ export function ArtistManagementProvider({
       education_level: educationLevelQuery.data?.data || [],
       income_level: incomeLevelQuery.data?.data || [],
       nationality: nationalityQuery.data?.data || [],
+      language: languageQuery.data?.data || [],
+      religion: religionQuery.data?.data || [],
     }),
     [
       biologicalGenderQuery.data,
@@ -108,6 +126,8 @@ export function ArtistManagementProvider({
       educationLevelQuery.data,
       incomeLevelQuery.data,
       nationalityQuery.data,
+      languageQuery.data,
+      religionQuery.data,
     ]
   );
 
@@ -133,6 +153,8 @@ export function ArtistManagementProvider({
         };
         setEditingDetail(detailWithName);
         setEditingNationalities(basicInfo.artistDetail.nationalities || []);
+        setEditingLanguages(basicInfo.artistDetail.languages || []);
+        setEditingReligions(basicInfo.artistDetail.religions || []);
       } else {
         // 建立空白明細資料供編輯
         const emptyDetail: ArtistDetail = {
@@ -154,6 +176,8 @@ export function ArtistManagementProvider({
         };
         setEditingDetail(emptyDetail);
         setEditingNationalities([]);
+        setEditingLanguages([]);
+        setEditingReligions([]);
       }
     }
   }, [artistQuery.data, searchedArtistId]);
@@ -178,6 +202,8 @@ export function ArtistManagementProvider({
       {
         detail: detailData,
         nationalities: editingNationalities,
+        languages: editingLanguages,
+        religions: editingReligions,
       },
       {
         onSuccess: (response) => {
@@ -200,6 +226,8 @@ export function ArtistManagementProvider({
     if (artistDetail) {
       setEditingDetail(artistDetail);
       setEditingNationalities(artistDetail.nationalities || []);
+      setEditingLanguages(artistDetail.languages || []);
+      setEditingReligions(artistDetail.religions || []);
     } else if (artistBasicInfo) {
       // 重新建立空白明細資料
       const basicInfo: ArtistBasicInfo = artistBasicInfo;
@@ -222,9 +250,13 @@ export function ArtistManagementProvider({
       };
       setEditingDetail(emptyDetail);
       setEditingNationalities([]);
+      setEditingLanguages([]);
+      setEditingReligions([]);
     } else {
       setEditingDetail(null);
       setEditingNationalities([]);
+      setEditingLanguages([]);
+      setEditingReligions([]);
     }
   };
 
@@ -248,6 +280,8 @@ export function ArtistManagementProvider({
     isQueryLoading,
     editingDetail,
     editingNationalities,
+    editingLanguages,
+    editingReligions,
     isSaving,
     error,
     artistBasicInfo,
@@ -259,6 +293,8 @@ export function ArtistManagementProvider({
     handleCancel,
     setEditingDetail,
     setEditingNationalities,
+    setEditingLanguages,
+    setEditingReligions,
     setError,
     clearError,
     getOptionName,

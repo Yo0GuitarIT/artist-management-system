@@ -45,6 +45,8 @@ export interface ArtistDetail {
   createdAt: string;
   updatedAt: string;
   nationalities?: ArtistNationality[]; // 國籍資料陣列
+  languages?: ArtistLanguage[]; // 語言資料陣列
+  religions?: ArtistReligion[]; // 宗教資料陣列
 }
 
 // 藝人國籍資料類型
@@ -52,6 +54,26 @@ export interface ArtistNationality {
   id: number;
   artistId: string;
   nationalityCode: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 藝人語言資料類型
+export interface ArtistLanguage {
+  id: number;
+  artistId: string;
+  languageCode: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 藝人宗教資料類型
+export interface ArtistReligion {
+  id: number;
+  artistId: string;
+  religionCode: string;
   isPrimary: boolean;
   createdAt: string;
   updatedAt: string;
