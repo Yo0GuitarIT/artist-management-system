@@ -1,12 +1,12 @@
-import type { PatientBasicInfo } from "../types/patientBasicInfo";
+import type { ArtistBasicInfo } from "../types/artistBasicInfo";
 
-interface PatientInfoCardProps {
-  patientBasicInfo: PatientBasicInfo | null;
+interface ArtistInfoCardProps {
+  artistBasicInfo: ArtistBasicInfo | null;
 }
 
-export default function PatientInfoCard({
-  patientBasicInfo,
-}: PatientInfoCardProps) {
+export default function ArtistInfoCard({
+  artistBasicInfo,
+}: ArtistInfoCardProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "未提供";
     return new Date(dateString).toLocaleDateString("zh-TW");
@@ -15,34 +15,34 @@ export default function PatientInfoCard({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-        病人資訊
+        藝人資訊
       </h2>
 
-      {patientBasicInfo ? (
+      {artistBasicInfo ? (
         <div className="space-y-3">
           <div className="space-y-3">
             <div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                病歷號:
+                藝人編號:
               </span>
               <p className="text-gray-900 dark:text-white font-medium">
-                {patientBasicInfo.mrn}
+                {artistBasicInfo.artistId}
               </p>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                姓名:
+                藝名:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.ptName}
+                {artistBasicInfo.stageName}
               </p>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                全名:
+                本名:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.ptNameFull || "未提供"}
+                {artistBasicInfo.realName || "未提供"}
               </p>
             </div>
             <div>
@@ -50,7 +50,7 @@ export default function PatientInfoCard({
                 出生日期:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {formatDate(patientBasicInfo.birthDate)}
+                {formatDate(artistBasicInfo.birthDate)}
               </p>
             </div>
             <div>
@@ -58,7 +58,7 @@ export default function PatientInfoCard({
                 生理性別:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.genderName || "未提供"}
+                {artistBasicInfo.genderName || "未提供"}
               </p>
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function PatientInfoCard({
                 婚姻:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.maritalStatusName || "未提供"}
+                {artistBasicInfo.maritalStatusName || "未提供"}
               </p>
             </div>
             <div>
@@ -74,7 +74,7 @@ export default function PatientInfoCard({
                 Email:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.email || "未提供"}
+                {artistBasicInfo.email || "未提供"}
               </p>
             </div>
             <div>
@@ -82,7 +82,7 @@ export default function PatientInfoCard({
                 教育程度:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.educationNoName || "未提供"}
+                {artistBasicInfo.educationNoName || "未提供"}
               </p>
             </div>
             <div>
@@ -90,7 +90,7 @@ export default function PatientInfoCard({
                 低/中收入戶:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.lowIncomeName || "未提供"}
+                {artistBasicInfo.lowIncomeName || "未提供"}
               </p>
             </div>
             <div>
@@ -98,7 +98,7 @@ export default function PatientInfoCard({
                 國籍:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.nationalityCodeName || "未提供"}
+                {artistBasicInfo.nationalityCodeName || "未提供"}
               </p>
             </div>
             <div>
@@ -106,7 +106,7 @@ export default function PatientInfoCard({
                 主要語言:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.mainLangName || "未提供"}
+                {artistBasicInfo.mainLangName || "未提供"}
               </p>
             </div>
             <div>
@@ -114,7 +114,7 @@ export default function PatientInfoCard({
                 宗教:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.religionName || "未提供"}
+                {artistBasicInfo.religionName || "未提供"}
               </p>
             </div>
             <div>
@@ -122,7 +122,7 @@ export default function PatientInfoCard({
                 身分證類型:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.idTypeName || "未提供"}
+                {artistBasicInfo.idTypeName || "未提供"}
               </p>
             </div>
             <div>
@@ -130,14 +130,14 @@ export default function PatientInfoCard({
                 身分證號:
               </span>
               <p className="text-gray-900 dark:text-white">
-                {patientBasicInfo.idNo || "未提供"}
+                {artistBasicInfo.idNo || "未提供"}
               </p>
             </div>
           </div>
         </div>
       ) : (
         <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-          請輸入病歷號並按下查詢按鈕
+          請輸入藝人編號並按下查詢按鈕
         </div>
       )}
     </div>

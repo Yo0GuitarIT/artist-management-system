@@ -12,7 +12,7 @@ app.use(express.json());
 
 // 基本路由
 app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "醫療記錄系統 API 伺服器運行中" });
+  res.json({ message: "藝人經紀管理系統 API 伺服器運行中" });
 });
 
 // 健康檢查
@@ -20,44 +20,47 @@ app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// 病人基本檔 API 路由
+// 藝人基本檔 API 路由
 
-// 根據病歷號查詢病人基本資料
-app.get("/api/patient-basic-info/:mrn", async (req: Request, res: Response) => {
-  try {
-    const mrn = req.params.mrn;
+// 根據藝人編號查詢藝人基本資料
+app.get(
+  "/api/artist-basic-info/:artistId",
+  async (req: Request, res: Response) => {
+    try {
+      const artistId = req.params.artistId;
 
-    const patientBasicInfo = await prisma.patientBasicInfo.findUnique({
-      where: { mrn },
-      include: {
-        patientDetail: {
-          include: {
-            nationalities: true, // 包含國籍資料
+      const artistBasicInfo = await prisma.artistBasicInfo.findUnique({
+        where: { artistId: artistId },
+        include: {
+          artistDetail: {
+            include: {
+              nationalities: true, // 包含國籍資料
+            },
           },
         },
-      },
-    });
-
-    if (!patientBasicInfo) {
-      res.status(404).json({
-        success: false,
-        message: "找不到病歷號對應的病人資料",
       });
-      return;
-    }
 
-    res.json({
-      success: true,
-      data: patientBasicInfo,
-    });
-  } catch (error) {
-    console.error("Error fetching patient basic info:", error);
-    res.status(500).json({
-      success: false,
-      message: "查詢病人基本資料時發生錯誤",
-    });
+      if (!artistBasicInfo) {
+        res.status(404).json({
+          success: false,
+          message: "找不到藝人編號對應的藝人資料",
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: artistBasicInfo,
+      });
+    } catch (error) {
+      console.error("Error fetching artist basic info:", error);
+      res.status(500).json({
+        success: false,
+        message: "查詢藝人基本資料時發生錯誤",
+      });
+    }
   }
-});
+);
 
 // 取得特定分類的代號選項
 app.get("/api/code-options/:category", async (req: Request, res: Response) => {
@@ -85,64 +88,64 @@ app.get("/api/code-options/:category", async (req: Request, res: Response) => {
   }
 });
 
-// 新增或更新病人明細資料
-app.post("/api/patient-detail", async (req: Request, res: Response) => {
+// 新增或更新藝人明細資料
+app.post("/api/artist-detail", async (req: Request, res: Response) => {
   try {
-    const patientDetailData = req.body;
+    const artistDetailData = req.body;
 
     // 檢查必要欄位
-    if (!patientDetailData.mrn) {
+    if (!artistDetailData.artistId) {
       res.status(400).json({
         success: false,
-        message: "請提供病歷號",
+        message: "請提供藝人編號",
       });
       return;
     }
 
     // 檢查對應的基本資料是否存在
-    const existingPatientBasic = await prisma.patientBasicInfo.findUnique({
-      where: { mrn: patientDetailData.mrn },
+    const existingArtistBasic = await prisma.artistBasicInfo.findUnique({
+      where: { artistId: artistDetailData.artistId },
     });
 
-    if (!existingPatientBasic) {
+    if (!existingArtistBasic) {
       res.status(400).json({
         success: false,
-        message: "找不到對應的病人基本資料",
+        message: "找不到對應的藝人基本資料",
       });
       return;
     }
 
     // 處理日期格式
-    if (patientDetailData.birthDate) {
-      patientDetailData.birthDate = new Date(patientDetailData.birthDate);
+    if (artistDetailData.birthDate) {
+      artistDetailData.birthDate = new Date(artistDetailData.birthDate);
     }
 
-    // 從 patientDetailData 中排除關聯欄位，只保留 PatientDetail 表的直接欄位
-    const { nationalities, ...patientDetailFields } = patientDetailData;
+    // 從 artistDetailData 中排除關聯欄位，只保留 ArtistDetail 表的直接欄位
+    const { nationalities, ...artistDetailFields } = artistDetailData;
 
     // 使用 transaction 來同時更新明細資料、國籍資料和基本檔案
     const result = await prisma.$transaction(async (tx) => {
       // 更新或創建明細資料
-      const patientDetail = await tx.patientDetail.upsert({
-        where: { mrn: patientDetailFields.mrn },
-        update: patientDetailFields,
-        create: patientDetailFields,
+      const artistDetail = await tx.artistDetail.upsert({
+        where: { artistId: artistDetailFields.artistId },
+        update: artistDetailFields,
+        create: artistDetailFields,
         include: {
           nationalities: true, // 包含國籍資料在回傳結果中
         },
       });
 
       // 處理國籍資料（如果有提供）
-      let savedNationalities = patientDetail.nationalities;
+      let savedNationalities = artistDetail.nationalities;
       if (nationalities && Array.isArray(nationalities)) {
-        // 先刪除該病人的所有現有國籍資料（除了要保留的已存在記錄）
+        // 先刪除該藝人的所有現有國籍資料（除了要保留的已存在記錄）
         const existingIds = nationalities
-          .filter((n) => n.id && n.id < 1000000000) // 只保留真實的 ID（非臨時 ID）
-          .map((n) => n.id);
+          .filter((n: any) => n.id && n.id < 1000000000) // 只保留真實的 ID（非臨時 ID）
+          .map((n: any) => n.id);
 
-        await tx.patientNationality.deleteMany({
+        await tx.artistNationality.deleteMany({
           where: {
-            mrn: patientDetailFields.mrn,
+            artistId: artistDetailFields.artistId,
             id: { notIn: existingIds },
           },
         });
@@ -152,7 +155,7 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
         for (const nationality of nationalities) {
           if (nationality.id && nationality.id < 1000000000) {
             // 更新現有記錄
-            const updated = await tx.patientNationality.update({
+            const updated = await tx.artistNationality.update({
               where: { id: nationality.id },
               data: {
                 nationalityCode: nationality.nationalityCode,
@@ -162,9 +165,9 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
             savedNationalities.push(updated);
           } else {
             // 新增記錄
-            const created = await tx.patientNationality.create({
+            const created = await tx.artistNationality.create({
               data: {
-                mrn: patientDetailFields.mrn,
+                artistId: artistDetailFields.artistId,
                 nationalityCode: nationality.nationalityCode,
                 isPrimary: nationality.isPrimary,
               },
@@ -187,58 +190,60 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
       const basicInfoUpdate: any = {};
 
       // 同步更新基本檔案中的相關欄位
-      if (patientDetailFields.ptName !== undefined) {
-        basicInfoUpdate.ptName = patientDetailFields.ptName;
+      if (artistDetailFields.stageName !== undefined) {
+        basicInfoUpdate.stageName = artistDetailFields.stageName;
       }
 
-      if (patientDetailFields.fullName !== undefined) {
-        basicInfoUpdate.ptNameFull = patientDetailFields.fullName;
+      if (artistDetailFields.fullName !== undefined) {
+        basicInfoUpdate.realName = artistDetailFields.fullName;
       }
 
-      if (patientDetailFields.birthDate !== undefined) {
-        basicInfoUpdate.birthDate = patientDetailFields.birthDate;
+      if (artistDetailFields.birthDate !== undefined) {
+        basicInfoUpdate.birthDate = artistDetailFields.birthDate;
       }
 
-      if (patientDetailFields.email !== undefined) {
-        basicInfoUpdate.email = patientDetailFields.email;
+      if (artistDetailFields.email !== undefined) {
+        basicInfoUpdate.email = artistDetailFields.email;
       }
 
       // 更新代號相關欄位
-      if (patientDetailFields.biologicalGender !== undefined) {
-        basicInfoUpdate.gender = patientDetailFields.biologicalGender;
+      if (artistDetailFields.biologicalGender !== undefined) {
+        basicInfoUpdate.gender = artistDetailFields.biologicalGender;
         basicInfoUpdate.genderName = await getCodeOptionName(
           "biological_gender",
-          patientDetailFields.biologicalGender
+          artistDetailFields.biologicalGender
         );
       }
 
-      if (patientDetailFields.maritalStatus !== undefined) {
-        basicInfoUpdate.maritalStatus = patientDetailFields.maritalStatus;
+      if (artistDetailFields.maritalStatus !== undefined) {
+        basicInfoUpdate.maritalStatus = artistDetailFields.maritalStatus;
         basicInfoUpdate.maritalStatusName = await getCodeOptionName(
           "marital_status",
-          patientDetailFields.maritalStatus
+          artistDetailFields.maritalStatus
         );
       }
 
-      if (patientDetailFields.educationLevel !== undefined) {
-        basicInfoUpdate.educationNo = patientDetailFields.educationLevel;
+      if (artistDetailFields.educationLevel !== undefined) {
+        basicInfoUpdate.educationNo = artistDetailFields.educationLevel;
         basicInfoUpdate.educationNoName = await getCodeOptionName(
           "education_level",
-          patientDetailFields.educationLevel
+          artistDetailFields.educationLevel
         );
       }
 
-      if (patientDetailFields.incomeLevel !== undefined) {
-        basicInfoUpdate.lowIncome = patientDetailFields.incomeLevel;
+      if (artistDetailFields.incomeLevel !== undefined) {
+        basicInfoUpdate.lowIncome = artistDetailFields.incomeLevel;
         basicInfoUpdate.lowIncomeName = await getCodeOptionName(
           "income_level",
-          patientDetailFields.incomeLevel
+          artistDetailFields.incomeLevel
         );
       }
 
       // 處理國籍資料同步到基本檔案
       if (savedNationalities && savedNationalities.length > 0) {
-        const primaryNationality = savedNationalities.find((n) => n.isPrimary);
+        const primaryNationality = savedNationalities.find(
+          (n: any) => n.isPrimary
+        );
 
         if (primaryNationality) {
           basicInfoUpdate.nationalityCode = primaryNationality.nationalityCode;
@@ -259,44 +264,43 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
 
       // 更新基本檔案
       if (Object.keys(basicInfoUpdate).length > 0) {
-        await tx.patientBasicInfo.update({
-          where: { mrn: patientDetailFields.mrn },
+        await tx.artistBasicInfo.update({
+          where: { artistId: artistDetailFields.artistId },
           data: basicInfoUpdate,
         });
       }
 
       // 回傳更新後的明細資料，包含最新的國籍資料
       return {
-        ...patientDetail,
+        ...artistDetail,
         nationalities: savedNationalities,
       };
     });
 
     res.json({
       success: true,
-      message: "病人明細資料更新成功，基本檔案已同步更新",
+      message: "藝人明細資料更新成功，基本檔案已同步更新",
       data: result,
     });
   } catch (error) {
-    console.error("Error creating/updating patient detail:", error);
+    console.error("Error creating/updating artist detail:", error);
     res.status(500).json({
       success: false,
-      message: "處理病人明細資料時發生錯誤",
+      message: "處理藝人明細資料時發生錯誤",
     });
   }
 });
 
 // 國籍資料相關 API (僅保留刪除功能)
 
-// 刪除病人國籍
-// 刪除病人國籍
+// 刪除藝人國籍
 app.delete(
-  "/api/patient-nationality/:id",
+  "/api/artist-nationality/:id",
   async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
 
-      const nationality = await prisma.patientNationality.findUnique({
+      const nationality = await prisma.artistNationality.findUnique({
         where: { id },
       });
 
@@ -312,14 +316,14 @@ app.delete(
 
       await prisma.$transaction(async (tx) => {
         // 刪除國籍資料
-        await tx.patientNationality.delete({
+        await tx.artistNationality.delete({
           where: { id },
         });
 
         // 如果刪除的是主要國籍，清除基本檔案的國籍資料
         if (wasPrimary) {
-          await tx.patientBasicInfo.update({
-            where: { mrn: nationality.mrn },
+          await tx.artistBasicInfo.update({
+            where: { artistId: nationality.artistId },
             data: {
               nationalityCode: null,
               nationalityCodeName: null,
@@ -333,7 +337,7 @@ app.delete(
         message: "國籍資料刪除成功",
       });
     } catch (error) {
-      console.error("Error deleting patient nationality:", error);
+      console.error("Error deleting artist nationality:", error);
       res.status(500).json({
         success: false,
         message: "刪除國籍資料時發生錯誤",
@@ -348,5 +352,5 @@ process.on("beforeExit", async () => {
 });
 
 app.listen(PORT, () => {
-  console.log(`伺服器運行在 http://localhost:${PORT}`);
+  console.log(`藝人經紀管理系統 API 伺服器運行在 http://localhost:${PORT}`);
 });

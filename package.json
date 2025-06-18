@@ -1,7 +1,7 @@
 {
-  "name": "medical-record-system",
+  "name": "artist-management-system",
   "version": "1.0.0",
-  "description": "醫療記錄系統 - 全端 TypeScript 專案",
+  "description": "藝人經紀管理系統 - 全端 TypeScript 專案",
   "scripts": {
     "build": "pnpm run build:backend && pnpm run build:frontend",
     "build:frontend": "cd frontend && pnpm build",
@@ -11,7 +11,9 @@
     "start": "cd backend && pnpm start"
   },
   "keywords": [
-    "medical-record",
+    "artist-management",
+    "talent-agency",
+    "entertainment",
     "fullstack",
     "typescript",
     "react",

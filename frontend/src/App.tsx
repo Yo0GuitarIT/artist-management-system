@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiService } from "./services/api";
-import PatientManagement from "./components/PatientManagement";
+import ArtistManagement from "./components/ArtistManagement";
 
 function App() {
   const [apiStatus, setApiStatus] = useState<string>("檢查中...");
@@ -35,7 +35,7 @@ function App() {
         </div>
 
         {/* 內容區域 */}
-        <PatientManagement />
+        <ArtistManagement />
       </div>
     </div>
   );

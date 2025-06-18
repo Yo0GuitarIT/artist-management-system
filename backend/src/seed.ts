@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function seedCodeOptions() {
   try {
-    // 生理性別選項
+    // 性別選項
     const genderOptions = [
       { category: "biological_gender", code: "1", name: "男", displayOrder: 1 },
       { category: "biological_gender", code: "2", name: "女", displayOrder: 2 },
@@ -189,54 +189,84 @@ async function seedCodeOptions() {
   }
 }
 
-async function seedPatientBasicInfo() {
+async function seedArtistBasicInfo() {
   try {
-    // 新增範例病人基本資料
-    const samplePatient = await prisma.patientBasicInfo.create({
+    // 新增範例藝人基本資料
+    const sampleArtist = await prisma.artistBasicInfo.create({
       data: {
-        mrn: "1000000166",
-        ptName: "飛龍 <3",
-        ptNameFull: "飛龍 <3<3",
-        birthDate: new Date("1900-11-29"),
-        gender: "0",
-        genderName: "未知",
-        maritalStatus: "60",
-        maritalStatusName: "同居",
-        email: "yo012345@gmail.com",
-        educationNo: "1",
-        educationNoName: "學前教育",
-        lowIncome: "01",
-        lowIncomeName: "低收入戶",
-        nationalityCode: "ATA",
-        nationalityCodeName: "南極洲",
-        mainLang: "de",
-        mainLangName: "德語",
-        religion: "03",
-        religionName: "道教",
-        idType: "04",
-        idTypeName: "旅行證",
-        idNo: "B1234567899999",
+        artistId: "ART001",
+        stageName: "小雨",
+        realName: "王小雨",
+        birthDate: new Date("1995-03-15"),
+        gender: "2",
+        genderName: "女",
+        maritalStatus: "20",
+        maritalStatusName: "未婚",
+        email: "xiaoyuwang@gmail.com",
+        educationNo: "5",
+        educationNoName: "大學",
+        lowIncome: "00",
+        lowIncomeName: "一般戶",
+        nationalityCode: "TWN",
+        nationalityCodeName: "台灣",
+        mainLang: "zh",
+        mainLangName: "中文",
+        religion: "01",
+        religionName: "佛教",
+        idType: "01",
+        idTypeName: "身分證",
+        idNo: "A123456789",
       },
     });
 
-    // 為該病人新增詳細資料
-    const samplePatientDetail = await prisma.patientDetail.create({
+    // 為該藝人新增詳細資料
+    const sampleArtistDetail = await prisma.artistDetail.create({
       data: {
-        mrn: "1000000166",
-        fullName: "飛龍 <3<3",
-        birthDate: new Date("1900-11-29"),
-        biologicalGender: "0",
-        maritalStatus: "60",
-        bloodTypeABO: "AB",
-        bloodTypeRH: "U",
-        email: "yo012345@gmail.com",
-        educationLevel: "1",
-        incomeLevel: "01",
+        artistId: "ART001",
+        stageName: "小雨",
+        fullName: "王小雨",
+        birthDate: new Date("1995-03-15"),
+        biologicalGender: "2",
+        maritalStatus: "20",
+        bloodTypeABO: "O",
+        bloodTypeRH: "P",
+        email: "xiaoyuwang@gmail.com",
+        educationLevel: "5",
+        incomeLevel: "00",
       },
     });
 
-    console.log("樣本病人資料已新增：", samplePatient);
-    console.log("樣本病人明細資料已新增：", samplePatientDetail);
+    // 新增第二個藝人
+    const sampleArtist2 = await prisma.artistBasicInfo.create({
+      data: {
+        artistId: "ART002",
+        stageName: "阿明",
+        realName: "陳明輝",
+        birthDate: new Date("1992-07-22"),
+        gender: "1",
+        genderName: "男",
+        maritalStatus: "10",
+        maritalStatusName: "已婚",
+        email: "mingchen@gmail.com",
+        educationNo: "6",
+        educationNoName: "研究所",
+        lowIncome: "00",
+        lowIncomeName: "一般戶",
+        nationalityCode: "TWN",
+        nationalityCodeName: "台灣",
+        mainLang: "zh",
+        mainLangName: "中文",
+        religion: "02",
+        religionName: "天主教",
+        idType: "01",
+        idTypeName: "身分證",
+        idNo: "B987654321",
+      },
+    });
+
+    console.log("樣本藝人資料已新增：", sampleArtist);
+    console.log("樣本藝人明細資料已新增：", sampleArtistDetail);
+    console.log("第二個樣本藝人資料已新增：", sampleArtist2);
   } catch (error) {
     console.error("新增樣本資料時發生錯誤：", error);
   }
@@ -244,7 +274,7 @@ async function seedPatientBasicInfo() {
 
 async function main() {
   await seedCodeOptions();
-  await seedPatientBasicInfo();
+  await seedArtistBasicInfo();
   await prisma.$disconnect();
 }
 

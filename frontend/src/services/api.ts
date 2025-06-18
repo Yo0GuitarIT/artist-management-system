@@ -1,10 +1,10 @@
 import axios from "axios";
 import type {
-  PatientBasicInfoResponse,
-  PatientDetail,
-  PatientDetailResponse,
+  ArtistBasicInfoResponse,
+  ArtistDetail,
+  ArtistDetailResponse,
   CodeOptionsResponse,
-} from "../types/patientBasicInfo";
+} from "../types/artistBasicInfo";
 
 // 基本 API 回應型別
 interface ApiResponse<T = unknown> {
@@ -53,22 +53,24 @@ export const apiService = {
     return response.data;
   },
 
-  // 病人基本檔操作
-  patientBasicInfo: {
-    // 根據病歷號查詢病人基本資料
-    getByMrn: async (mrn: string): Promise<PatientBasicInfoResponse> => {
-      const response = await api.get(`/patient-basic-info/${mrn}`);
+  // 藝人基本檔操作
+  artistBasicInfo: {
+    // 根據藝人編號查詢藝人基本資料
+    getByArtistId: async (
+      artistId: string
+    ): Promise<ArtistBasicInfoResponse> => {
+      const response = await api.get(`/artist-basic-info/${artistId}`);
       return response.data;
     },
   },
 
-  // 病人明細資料操作
-  patientDetail: {
-    // 新增或更新病人明細資料
+  // 藝人明細資料操作
+  artistDetail: {
+    // 新增或更新藝人明細資料
     createOrUpdate: async (
-      patientDetailData: Omit<PatientDetail, "id" | "createdAt" | "updatedAt">
-    ): Promise<PatientDetailResponse> => {
-      const response = await api.post("/patient-detail", patientDetailData);
+      artistDetailData: Omit<ArtistDetail, "id" | "createdAt" | "updatedAt">
+    ): Promise<ArtistDetailResponse> => {
+      const response = await api.post("/artist-detail", artistDetailData);
       return response.data;
     },
   },
@@ -83,12 +85,12 @@ export const apiService = {
   },
 
   // 國籍資料操作
-  patientNationality: {
+  artistNationality: {
     // 刪除國籍資料 (立即執行)
     delete: async (
       id: number
     ): Promise<{ success: boolean; message?: string }> => {
-      const response = await api.delete(`/patient-nationality/${id}`);
+      const response = await api.delete(`/artist-nationality/${id}`);
       return response.data;
     },
   },

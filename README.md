@@ -1,10 +1,12 @@
-# 醫療記錄系統 - 病人基本檔查詢
+# 藝人經紀管理系統
 
-一個使用 React + Vite 前端和 Express 後端的全端 TypeScript 專案，專注於病人基本檔資料查詢功能。
+一個使用 React + Vite 前端和 Express 後端的全端 TypeScript 專案，專注於藝人基本檔資料管理功能。
 
 ## 功能特色
 
-- **病人基本檔查詢**：根據病歷號查詢病人基本資料
+- **藝人基本檔查詢**：根據藝人編號查詢藝人基本資料
+- **藝人詳細資料管理**：編輯藝人詳細資訊，包含藝名、本名、出生日期等
+- **國籍資料管理**：支援多重國籍設定
 - **響應式設計**：支援桌面和行動裝置
 - **即時狀態檢查**：顯示後端連接狀態
 
@@ -17,6 +19,7 @@
 - TypeScript
 - Axios (HTTP 客戶端)
 - Tailwind CSS (UI 樣式)
+- TanStack Query (狀態管理)
 
 ### 後端
 
@@ -120,22 +123,22 @@ pnpm run dev:frontend
 - `GET /health` - 健康檢查
 - `GET /api/test` - 測試 API
 
-### 病人基本檔 API
+### 藝人基本檔 API
 
-- `GET /api/patient-basic-info/:mrn` - 根據病歷號查詢病人基本資料
-- `POST /api/patient-basic-info` - 新增病人基本資料
-- `PUT /api/patient-basic-info/:mrn` - 更新病人基本資料
+- `GET /api/artist-basic-info/:artistId` - 根據藝人 ID 查詢藝人基本資料
+- `POST /api/artist-basic-info` - 新增藝人基本資料
+- `PUT /api/artist-basic-info/:artistId` - 更新藝人基本資料
 
 ## 資料庫結構
 
-### PatientBasicInfo 表格
+### ArtistBasicInfo 表格
 
 ```sql
-CREATE TABLE "patient_basic_info" (
+CREATE TABLE "artist_basic_info" (
     "id" SERIAL PRIMARY KEY,
-    "mrn" TEXT UNIQUE NOT NULL,        -- 病歷號
-    "ptName" TEXT NOT NULL,            -- 病人姓名
-    "ptNameFull" TEXT,                 -- 病人全名
+    "artistId" TEXT UNIQUE NOT NULL,   -- 藝人ID
+    "ptName" TEXT NOT NULL,            -- 藝人姓名
+    "ptNameFull" TEXT,                 -- 藝人全名
     "birthDate" TIMESTAMP(3),          -- 出生日期
     "gender" TEXT,                     -- 性別代碼
     "genderName" TEXT,                 -- 性別名稱
@@ -167,7 +170,7 @@ CREATE TABLE "patient_basic_info" (
 - 前端代理設定會將 `/api/*` 請求轉發到後端
 - API 服務位於 `frontend/src/services/api.ts`
 - 使用 Axios 進行 HTTP 請求
-- 主要功能為病人基本檔查詢介面
+- 主要功能為藝人基本檔查詢介面
 
 ### 後端開發
 

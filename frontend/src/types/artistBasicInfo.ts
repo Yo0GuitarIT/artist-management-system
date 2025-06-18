@@ -1,9 +1,9 @@
-// 病人基本檔資料類型
-export interface PatientBasicInfo {
+// 藝人基本檔資料類型
+export interface ArtistBasicInfo {
   id: number;
-  mrn: string;
-  ptName: string;
-  ptNameFull?: string;
+  artistId: string;
+  stageName: string;
+  realName?: string;
   birthDate?: string;
   gender?: string;
   genderName?: string;
@@ -25,14 +25,14 @@ export interface PatientBasicInfo {
   idNo?: string;
   createdAt: string;
   updatedAt: string;
-  patientDetail?: PatientDetail; // 關聯的明細資料
+  artistDetail?: ArtistDetail; // 關聯的明細資料
 }
 
-// 病人明細資料類型
-export interface PatientDetail {
+// 藝人明細資料類型
+export interface ArtistDetail {
   id: number;
-  mrn: string;
-  ptName?: string; // 病人姓名（可編輯）
+  artistId: string;
+  stageName?: string; // 藝名（可編輯）
   fullName?: string;
   birthDate?: string;
   biologicalGender?: string;
@@ -44,13 +44,13 @@ export interface PatientDetail {
   incomeLevel?: string;
   createdAt: string;
   updatedAt: string;
-  nationalities?: PatientNationality[]; // 國籍資料陣列
+  nationalities?: ArtistNationality[]; // 國籍資料陣列
 }
 
-// 病人國籍資料類型
-export interface PatientNationality {
+// 藝人國籍資料類型
+export interface ArtistNationality {
   id: number;
-  mrn: string;
+  artistId: string;
   nationalityCode: string;
   isPrimary: boolean;
   createdAt: string;
@@ -71,15 +71,15 @@ export interface CodeOption {
 }
 
 // API 回應格式
-export interface PatientBasicInfoResponse {
+export interface ArtistBasicInfoResponse {
   success: boolean;
-  data?: PatientBasicInfo;
+  data?: ArtistBasicInfo;
   message?: string;
 }
 
-export interface PatientDetailResponse {
+export interface ArtistDetailResponse {
   success: boolean;
-  data?: PatientDetail;
+  data?: ArtistDetail;
   message?: string;
 }
 
@@ -89,8 +89,8 @@ export interface CodeOptionsResponse {
   message?: string;
 }
 
-export interface PatientNationalityResponse {
+export interface ArtistNationalityResponse {
   success: boolean;
-  data?: PatientNationality | PatientNationality[];
+  data?: ArtistNationality | ArtistNationality[];
   message?: string;
 }

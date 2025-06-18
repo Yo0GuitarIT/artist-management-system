@@ -1,25 +1,29 @@
 import { useState, useEffect } from "react";
-import type { PatientNationality, CodeOption } from "../types/patientBasicInfo";
+import type { ArtistNationality, CodeOption } from "../types/artistBasicInfo";
 import { apiService } from "../services/api";
+import { useDeleteArtistNationality } from "../hooks/useArtistMutatinons";
 
-interface PatientNationalityCardProps {
-  mrn: string;
-  nationalities: PatientNationality[]; // 從父組件傳入的國籍資料
-  onNationalitiesChange: (nationalities: PatientNationality[]) => void; // 更新國籍資料的回調
+interface ArtistNationalityCardProps {
+  artistId: string;
+  nationalities: ArtistNationality[]; // 從父組件傳入的國籍資料
+  onNationalitiesChange: (nationalities: ArtistNationality[]) => void; // 更新國籍資料的回調
   onNationalityDelete?: (id: number) => void; // 刪除國籍的回調（立即執行）
 }
 
-export default function PatientNationalityCard({
-  mrn,
+export default function ArtistNationalityCard({
+  artistId,
   nationalities,
   onNationalitiesChange,
   onNationalityDelete,
-}: PatientNationalityCardProps) {
+}: ArtistNationalityCardProps) {
   const [nationalityOptions, setNationalityOptions] = useState<CodeOption[]>(
     []
   );
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  // React Query mutation for deleting nationality
+  const deleteNationalityMutation = useDeleteArtistNationality();
+  const loading = deleteNationalityMutation.isPending;
 
   // 載入國籍選項
   useEffect(() => {
@@ -44,9 +48,9 @@ export default function PatientNationalityCard({
     if (nationalityOptions.length === 0) return;
 
     const firstOption = nationalityOptions[0];
-    const newNationality: PatientNationality = {
+    const newNationality: ArtistNationality = {
       id: Date.now(), // 使用時間戳作為臨時 ID
-      mrn,
+      artistId: artistId,
       nationalityCode: firstOption.code,
       isPrimary: nationalities.length === 0, // 如果是第一個，設為主要
       createdAt: new Date().toISOString(),
@@ -94,22 +98,21 @@ export default function PatientNationalityCard({
       return;
     }
 
-    // 如果是已存在的國籍，呼叫 API 刪除
-    try {
-      setLoading(true);
-      const response = await apiService.patientNationality.delete(id);
-
-      if (response.success) {
-        onNationalityDelete?.(id);
-      } else {
-        setError(response.message || "刪除國籍失敗");
-      }
-    } catch (error) {
-      console.error("刪除國籍失敗:", error);
-      setError("刪除國籍失敗");
-    } finally {
-      setLoading(false);
-    }
+    // 如果是已存在的國籍，使用 React Query mutation 刪除
+    deleteNationalityMutation.mutate(id, {
+      onSuccess: (response) => {
+        if (response.success) {
+          // 調用父組件的回調，讓父組件處理狀態更新
+          onNationalityDelete?.(id);
+        } else {
+          setError(response.message || "刪除國籍失敗");
+        }
+      },
+      onError: (error) => {
+        console.error("刪除國籍失敗:", error);
+        setError("刪除國籍失敗");
+      },
+    });
   };
 
   return (
@@ -120,7 +123,7 @@ export default function PatientNationalityCard({
         </h2>
         <button
           onClick={handleAddNationality}
-          disabled={loading || !mrn}
+          disabled={loading || !artistId}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors duration-200"
         >
           新增

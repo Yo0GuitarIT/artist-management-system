@@ -1,4 +1,4 @@
-import type { PatientDetail, CodeOption } from "../types/patientBasicInfo";
+import type { ArtistDetail, CodeOption } from "../types/artistBasicInfo";
 
 interface CodeOptionsMap {
   biological_gender: CodeOption[];
@@ -9,21 +9,21 @@ interface CodeOptionsMap {
   income_level: CodeOption[];
 }
 
-interface PatientDetailEditCardProps {
-  editingDetail: PatientDetail | null;
-  patientDetail: PatientDetail | null;
+interface ArtistDetailEditCardProps {
+  editingDetail: ArtistDetail | null;
+  artistDetail: ArtistDetail | null;
   codeOptions: CodeOptionsMap;
-  onEditingDetailChange: (detail: PatientDetail) => void;
+  onEditingDetailChange: (detail: ArtistDetail) => void;
   getOptionName: (category: keyof CodeOptionsMap, code: string) => string;
 }
 
-export default function PatientDetailEditCard({
+export default function ArtistDetailEditCard({
   editingDetail,
-  patientDetail,
+  artistDetail,
   codeOptions,
   onEditingDetailChange,
   getOptionName,
-}: PatientDetailEditCardProps) {
+}: ArtistDetailEditCardProps) {
   return (
     <>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -33,19 +33,19 @@ export default function PatientDetailEditCard({
 
         {editingDetail ? (
           <div className="space-y-4">
-            {/* 姓名和全名 */}
+            {/* 藝名和全名 */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  姓名
+                  藝名
                 </label>
                 <input
                   type="text"
-                  value={editingDetail.ptName || ""}
+                  value={editingDetail.stageName || ""}
                   onChange={(e) =>
                     onEditingDetailChange({
                       ...editingDetail,
-                      ptName: e.target.value,
+                      stageName: e.target.value,
                     })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -53,7 +53,7 @@ export default function PatientDetailEditCard({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  全名
+                  本名
                 </label>
                 <input
                   type="text"
@@ -261,7 +261,7 @@ export default function PatientDetailEditCard({
       </div>
 
       {/* 顯示模式（僅顯示已儲存的資料） */}
-      {patientDetail && !editingDetail && (
+      {artistDetail && !editingDetail && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             已儲存的基本資料
@@ -274,7 +274,7 @@ export default function PatientDetailEditCard({
               <p className="text-gray-900 dark:text-white">
                 {getOptionName(
                   "biological_gender",
-                  patientDetail.biologicalGender || ""
+                  artistDetail.biologicalGender || ""
                 )}
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function PatientDetailEditCard({
               <p className="text-gray-900 dark:text-white">
                 {getOptionName(
                   "marital_status",
-                  patientDetail.maritalStatus || ""
+                  artistDetail.maritalStatus || ""
                 )}
               </p>
             </div>
@@ -296,12 +296,9 @@ export default function PatientDetailEditCard({
               <p className="text-gray-900 dark:text-white">
                 {getOptionName(
                   "blood_type_abo",
-                  patientDetail.bloodTypeABO || ""
+                  artistDetail.bloodTypeABO || ""
                 )}{" "}
-                {getOptionName(
-                  "blood_type_rh",
-                  patientDetail.bloodTypeRH || ""
-                )}
+                {getOptionName("blood_type_rh", artistDetail.bloodTypeRH || "")}
               </p>
             </div>
             <div>
@@ -311,7 +308,7 @@ export default function PatientDetailEditCard({
               <p className="text-gray-900 dark:text-white">
                 {getOptionName(
                   "education_level",
-                  patientDetail.educationLevel || ""
+                  artistDetail.educationLevel || ""
                 )}
               </p>
             </div>

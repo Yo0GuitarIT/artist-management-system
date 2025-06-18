@@ -14,11 +14,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model PatientBasicInfo {
+model ArtistBasicInfo {
   id                    Int      @id @default(autoincrement())
-  mrn                   String   @unique // 病歷號
-  ptName                String   // 病人姓名
-  ptNameFull            String?  // 病人全名
+  artistId              String   @unique // 藝人編號
+  stageName             String   // 藝名
+  realName              String?  // 本名
   birthDate             DateTime? // 出生日期
   gender                String?  // 性別代碼
   genderName            String?  // 性別名稱
@@ -41,19 +41,19 @@ model PatientBasicInfo {
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
-  // 關聯到病人明細資料
-  patientDetail         PatientDetail?
+  // 關聯到藝人明細資料
+  artistDetail          ArtistDetail?
 
-  @@map("patient_basic_info")
+  @@map("artist_basic_info")
 }
 
-// 病人明細資料表
-model PatientDetail {
+// 藝人明細資料表
+model ArtistDetail {
   id                    Int      @id @default(autoincrement())
-  mrn                   String   @unique // 病歷號 (外鍵)
+  artistId              String   @unique // 藝人編號 (外鍵)
   
   // 基本資料區塊
-  ptName                String?  // 病人姓名
+  stageName             String?  // 藝名
   fullName              String?  // 全名
   birthDate             DateTime? // 出生日期
   biologicalGender      String?  // 生理性別代號
@@ -68,27 +68,27 @@ model PatientDetail {
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   // 關聯到基本資料表
-  patientBasicInfo      PatientBasicInfo @relation(fields: [mrn], references: [mrn], onDelete: Cascade)
+  artistBasicInfo       ArtistBasicInfo @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
   
   // 關聯到國籍資料
-  nationalities         PatientNationality[]
+  nationalities         ArtistNationality[]
 
-  @@map("patient_detail")
+  @@map("artist_detail")
 }
 
-// 病人國籍資料表
-model PatientNationality {
+// 藝人國籍資料表
+model ArtistNationality {
   id                    Int      @id @default(autoincrement())
-  mrn                   String   // 病歷號 (外鍵)
+  artistId              String   // 藝人編號 (外鍵)
   nationalityCode       String   // 國籍代碼
   isPrimary             Boolean  @default(false) // 是否為主要國籍
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
-  // 關聯到病人明細資料
-  patientDetail         PatientDetail @relation(fields: [mrn], references: [mrn], onDelete: Cascade)
+  // 關聯到藝人明細資料
+  artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
 
-  @@map("patient_nationality")
+  @@map("artist_nationality")
 }
 
 // 代號選項對照表
