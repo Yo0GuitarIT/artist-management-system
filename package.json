@@ -7,8 +7,7 @@
     "build:frontend": "cd frontend && pnpm build",
     "build:backend": "cd backend && pnpm build",
     "install:all": "pnpm install && cd frontend && pnpm install && cd ../backend && pnpm install",
-    "clean": "rm -rf frontend/node_modules backend/node_modules node_modules frontend/dist backend/dist",
-    "start": "cd backend && pnpm start"
+    "clean": "rm -rf frontend/node_modules backend/node_modules node_modules frontend/dist backend/dist"
   },
   "keywords": [
     "artist-management",
