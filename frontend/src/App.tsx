@@ -3,7 +3,6 @@ import { apiService } from "./services/api";
 import PatientForm from "./components/PatientForm";
 import PatientList from "./components/PatientList";
 import type { Patient, PatientFormData } from "./types/patient";
-import "./App.css";
 
 function App() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -119,33 +118,42 @@ function App() {
   }, []);
 
   return (
-    <div className="app-container">
-      <h1>醫療記錄系統 - CRUD 管理</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white text-center mb-8">
+          醫療記錄系統 - CRUD 管理
+        </h1>
 
-      <div className="status-section">
-        <h2>系統狀態</h2>
-        <p>後端狀態: {apiStatus}</p>
-      </div>
+        {/* 系統狀態 */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            系統狀態
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            後端狀態: {apiStatus}
+          </p>
+        </div>
 
-      <div className="main-content">
-        <div className="actions-bar">
+        {/* 操作按鈕 */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <button
             onClick={() => setShowForm(!showForm)}
-            className="btn-primary"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             {showForm ? "隱藏表單" : "新增病患記錄"}
           </button>
           <button
             onClick={loadPatients}
-            className="btn-secondary"
             disabled={loading}
+            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
           >
             {loading ? "載入中..." : "重新載入"}
           </button>
         </div>
 
+        {/* 表單區域 */}
         {showForm && (
-          <div className="form-section">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
             <PatientForm
               onSubmit={handleFormSubmit}
               initialData={
@@ -164,7 +172,8 @@ function App() {
           </div>
         )}
 
-        <div className="list-section">
+        {/* 列表區域 */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
           <PatientList
             patients={patients}
             onEdit={handleEditPatient}
