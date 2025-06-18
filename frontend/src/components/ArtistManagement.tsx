@@ -1,61 +1,29 @@
-import { ArtistManagementProvider, useArtistManagement } from "../context";
+import { ArtistManagementProvider } from "../context";
 import ArtistInfoCard from "./ArtistInfoCard";
-import ArtistDetailEditCard from "./ArtistDetailEditCard";
-import ArtistNationalityCard from "./ArtistNationalityCard";
-import ArtistSearchCardWithContext from "./ArtistSearchGroup";
+import BasicInfoCard from "./BasicInfoCard";
+import NationalityCard from "./NationalityCard";
+import SearchGroup from "./SearchGroup";
 
 // 主要的管理元件內容
 function ArtistManagementContent() {
-  const {
-    artistBasicInfo,
-    editingDetail,
-    editingNationalities,
-    setEditingDetail,
-    setEditingNationalities,
-    codeOptions,
-    getOptionName,
-  } = useArtistManagement();
-
   return (
     <div className="space-y-6 p-6">
       {/* 搜尋區域 */}
-      <ArtistSearchCardWithContext />
+      <SearchGroup />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左側：藝人資訊卡片 */}
         <div className="lg:col-span-1">
-          <ArtistInfoCard artistBasicInfo={artistBasicInfo || null} />
+          <ArtistInfoCard />
         </div>
 
         {/* 右側：基本資料和國籍資料卡片 */}
         <div className="lg:col-span-2 space-y-6">
           {/* 基本資料卡片 */}
-          <ArtistDetailEditCard
-            editingDetail={editingDetail}
-            artistDetail={artistBasicInfo?.artistDetail || null}
-            codeOptions={codeOptions}
-            onEditingDetailChange={setEditingDetail}
-            getOptionName={getOptionName}
-          />
+          <BasicInfoCard />
 
           {/* 國籍資料卡片 */}
-          {artistBasicInfo && (
-            <ArtistNationalityCard
-              artistId={artistBasicInfo.artistId}
-              nationalities={editingNationalities}
-              onNationalitiesChange={setEditingNationalities}
-              onNationalityDelete={async (deletedId) => {
-                // 刪除成功後，從本地狀態中移除該國籍
-                const updatedNationalities = editingNationalities.filter(
-                  (nationality) => nationality.id !== deletedId
-                );
-                setEditingNationalities(updatedNationalities);
-
-                // React Query 的 useDeleteArtistNationality mutation
-                // 會自動 invalidateQueries 並重新載入藝人資料
-              }}
-            />
-          )}
+          <NationalityCard />
         </div>
       </div>
     </div>

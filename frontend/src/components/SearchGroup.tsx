@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useArtistManagement } from "../context";
 
-export default function ArtistSearchGroup() {
+export default function SearchGroup() {
   const {
     handleSearch,
     handleSave,

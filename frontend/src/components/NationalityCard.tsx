@@ -1,68 +1,41 @@
-import { useState, useEffect } from "react";
-import type { ArtistNationality, CodeOption } from "../types/artistBasicInfo";
-import { apiService } from "../services/api";
+import { useArtistManagement } from "../context";
 import { useDeleteArtistNationality } from "../hooks/useArtistMutatinons";
+import type { ArtistNationality } from "../types/artistBasicInfo";
 
-interface ArtistNationalityCardProps {
-  artistId: string;
-  nationalities: ArtistNationality[]; // 從父組件傳入的國籍資料
-  onNationalitiesChange: (nationalities: ArtistNationality[]) => void; // 更新國籍資料的回調
-  onNationalityDelete?: (id: number) => void; // 刪除國籍的回調（立即執行）
-}
+export default function NationalityCard() {
+  const {
+    artistBasicInfo,
+    editingNationalities,
+    setEditingNationalities,
+    codeOptions,
+  } = useArtistManagement();
 
-export default function ArtistNationalityCard({
-  artistId,
-  nationalities,
-  onNationalitiesChange,
-  onNationalityDelete,
-}: ArtistNationalityCardProps) {
-  const [nationalityOptions, setNationalityOptions] = useState<CodeOption[]>(
-    []
-  );
-  const [error, setError] = useState<string>("");
-
-  // React Query mutation for deleting nationality
   const deleteNationalityMutation = useDeleteArtistNationality();
-  const loading = deleteNationalityMutation.isPending;
 
-  // 載入國籍選項
-  useEffect(() => {
-    const loadNationalityOptions = async () => {
-      try {
-        const response = await apiService.codeOptions.getByCategory(
-          "nationality"
-        );
-        if (response.success && response.data) {
-          setNationalityOptions(response.data);
-        }
-      } catch (error) {
-        console.error("載入國籍選項失敗:", error);
-      }
-    };
-
-    loadNationalityOptions();
-  }, []);
+  if (!artistBasicInfo) {
+    return null; // 如果沒有藝人資料就不顯示
+  }
 
   // 新增國籍 (不立即存檔)
   const handleAddNationality = () => {
-    if (nationalityOptions.length === 0) return;
+    if (codeOptions.nationality.length === 0) return;
 
-    const firstOption = nationalityOptions[0];
+    const firstOption = codeOptions.nationality[0];
     const newNationality: ArtistNationality = {
       id: Date.now(), // 使用時間戳作為臨時 ID
-      artistId: artistId,
+      artistId: artistBasicInfo.artistId,
       nationalityCode: firstOption.code,
-      isPrimary: nationalities.length === 0, // 如果是第一個，設為主要
+      isPrimary: editingNationalities.length === 0, // 如果是第一個，設為主要
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    onNationalitiesChange([...nationalities, newNationality]);
+    setEditingNationalities([...editingNationalities, newNationality]);
   };
 
   // 更新國籍代碼 (不立即存檔)
   const handleNationalityCodeChange = (id: number, nationalityCode: string) => {
-    const updatedNationalities = nationalities.map((nationality) =>
+    const updatedNationalities = editingNationalities.map((nationality) =>
       nationality.id === id
         ? {
             ...nationality,
@@ -71,17 +44,17 @@ export default function ArtistNationalityCard({
           }
         : nationality
     );
-    onNationalitiesChange(updatedNationalities);
+    setEditingNationalities(updatedNationalities);
   };
 
   // 切換主要國籍 (不立即存檔)
   const handleTogglePrimary = (id: number, isPrimary: boolean) => {
-    const updatedNationalities = nationalities.map((nationality) => ({
+    const updatedNationalities = editingNationalities.map((nationality) => ({
       ...nationality,
       isPrimary: nationality.id === id ? isPrimary : false, // 確保只有一個主要國籍
       updatedAt: new Date().toISOString(),
     }));
-    onNationalitiesChange(updatedNationalities);
+    setEditingNationalities(updatedNationalities);
   };
 
   // 刪除國籍 (立即執行 API)
@@ -91,28 +64,26 @@ export default function ArtistNationalityCard({
     // 如果是新增的國籍（臨時 ID），直接從列表中移除
     if (id > 1000000000) {
       // 時間戳 ID
-      const updatedNationalities = nationalities.filter(
+      const updatedNationalities = editingNationalities.filter(
         (nationality) => nationality.id !== id
       );
-      onNationalitiesChange(updatedNationalities);
+      setEditingNationalities(updatedNationalities);
       return;
     }
 
-    // 如果是已存在的國籍，使用 React Query mutation 刪除
-    deleteNationalityMutation.mutate(id, {
-      onSuccess: (response) => {
-        if (response.success) {
-          // 調用父組件的回調，讓父組件處理狀態更新
-          onNationalityDelete?.(id);
-        } else {
-          setError(response.message || "刪除國籍失敗");
-        }
-      },
-      onError: (error) => {
-        console.error("刪除國籍失敗:", error);
-        setError("刪除國籍失敗");
-      },
-    });
+    // 如果是已存在的國籍，呼叫 API 刪除
+    try {
+      await deleteNationalityMutation.mutateAsync(id);
+
+      // 刪除成功後，從本地狀態中移除該國籍
+      const updatedNationalities = editingNationalities.filter(
+        (nationality) => nationality.id !== id
+      );
+      setEditingNationalities(updatedNationalities);
+    } catch (error) {
+      console.error("刪除國籍失敗:", error);
+      alert("刪除國籍失敗");
+    }
   };
 
   return (
@@ -123,24 +94,12 @@ export default function ArtistNationalityCard({
         </h2>
         <button
           onClick={handleAddNationality}
-          disabled={loading || !artistId}
+          disabled={deleteNationalityMutation.isPending}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors duration-200"
         >
           新增
         </button>
       </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      {loading && (
-        <div className="text-center py-4">
-          <p className="text-gray-500 dark:text-gray-400">載入中...</p>
-        </div>
-      )}
 
       <div className="space-y-3">
         {/* 表頭 */}
@@ -151,7 +110,7 @@ export default function ArtistNationalityCard({
         </div>
 
         {/* 國籍資料列表 */}
-        {nationalities.map((nationality) => (
+        {editingNationalities.map((nationality) => (
           <div
             key={nationality.id}
             className="grid grid-cols-12 gap-3 items-center"
@@ -160,7 +119,8 @@ export default function ArtistNationalityCard({
             <div className="col-span-1">
               <button
                 onClick={() => handleDeleteNationality(nationality.id)}
-                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                disabled={deleteNationalityMutation.isPending}
+                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
                 title="刪除"
               >
                 <svg
@@ -206,7 +166,7 @@ export default function ArtistNationalityCard({
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
               >
-                {nationalityOptions.map((option) => (
+                {codeOptions.nationality.map((option) => (
                   <option key={option.code} value={option.code}>
                     {option.name}
                   </option>
@@ -216,7 +176,7 @@ export default function ArtistNationalityCard({
           </div>
         ))}
 
-        {nationalities.length === 0 && !loading && (
+        {editingNationalities.length === 0 && (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             尚無國籍資料，請點擊「新增」按鈕
           </div>
