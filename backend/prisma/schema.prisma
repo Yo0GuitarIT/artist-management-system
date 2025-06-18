@@ -14,18 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Patient {
-  id        Int      @id @default(autoincrement())
-  name      String
-  age       Int
-  phone     String
-  diagnosis String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("patients")
-}
-
 model PatientBasicInfo {
   id                    Int      @id @default(autoincrement())
   mrn                   String   @unique // 病歷號

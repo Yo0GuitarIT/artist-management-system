@@ -1,35 +1,9 @@
 import { useState, useEffect } from "react";
 import { apiService } from "./services/api";
-import PatientForm from "./components/PatientForm";
-import PatientList from "./components/PatientList";
 import PatientBasicInfoSearch from "./components/PatientBasicInfoSearch";
-import type { Patient, PatientFormData } from "./types/patient";
 
 function App() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [showForm, setShowForm] = useState<boolean>(false);
   const [apiStatus, setApiStatus] = useState<string>("檢查中...");
-  const [activeTab, setActiveTab] = useState<"basic-info" | "patient-records">(
-    "basic-info"
-  );
-
-  // 載入所有病患記錄
-  const loadPatients = async () => {
-    setLoading(true);
-    try {
-      const response = await apiService.patients.getAll();
-      if (response.success && response.data) {
-        setPatients(response.data);
-      }
-    } catch (error) {
-      console.error("載入病患記錄失敗:", error);
-      alert("載入病患記錄失敗");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // 檢查後端連接
   const checkBackendConnection = async () => {
@@ -43,82 +17,8 @@ function App() {
     }
   };
 
-  // 新增病患記錄
-  const handleCreatePatient = async (patientData: PatientFormData) => {
-    try {
-      const response = await apiService.patients.create(patientData);
-      if (response.success) {
-        await loadPatients(); // 重新載入列表
-        setShowForm(false);
-        alert("病患記錄新增成功");
-      }
-    } catch (error) {
-      console.error("新增病患記錄失敗:", error);
-      alert("新增病患記錄失敗");
-    }
-  };
-
-  // 更新病患記錄
-  const handleUpdatePatient = async (patientData: PatientFormData) => {
-    if (!editingPatient) return;
-
-    try {
-      const response = await apiService.patients.update(
-        editingPatient.id,
-        patientData
-      );
-      if (response.success) {
-        await loadPatients(); // 重新載入列表
-        setEditingPatient(null);
-        setShowForm(false);
-        alert("病患記錄更新成功");
-      }
-    } catch (error) {
-      console.error("更新病患記錄失敗:", error);
-      alert("更新病患記錄失敗");
-    }
-  };
-
-  // 刪除病患記錄
-  const handleDeletePatient = async (id: number) => {
-    if (!confirm("確定要刪除這筆病患記錄嗎？")) return;
-
-    try {
-      const response = await apiService.patients.delete(id);
-      if (response.success) {
-        await loadPatients(); // 重新載入列表
-        alert("病患記錄刪除成功");
-      }
-    } catch (error) {
-      console.error("刪除病患記錄失敗:", error);
-      alert("刪除病患記錄失敗");
-    }
-  };
-
-  // 編輯病患記錄
-  const handleEditPatient = (patient: Patient) => {
-    setEditingPatient(patient);
-    setShowForm(true);
-  };
-
-  // 取消操作
-  const handleCancel = () => {
-    setEditingPatient(null);
-    setShowForm(false);
-  };
-
-  // 提交表單
-  const handleFormSubmit = (patientData: PatientFormData) => {
-    if (editingPatient) {
-      handleUpdatePatient(patientData);
-    } else {
-      handleCreatePatient(patientData);
-    }
-  };
-
   useEffect(() => {
     checkBackendConnection();
-    loadPatients();
   }, []);
 
   return (
@@ -138,86 +38,8 @@ function App() {
           </p>
         </div>
 
-        {/* 分頁導航 */}
-        <div className="mb-8">
-          <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={() => setActiveTab("basic-info")}
-              className={`px-6 py-3 font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                activeTab === "basic-info"
-                  ? "bg-blue-600 text-white focus:ring-blue-500"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500"
-              }`}
-            >
-              病人基本檔查詢
-            </button>
-            <button
-              onClick={() => setActiveTab("patient-records")}
-              className={`px-6 py-3 font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                activeTab === "patient-records"
-                  ? "bg-blue-600 text-white focus:ring-blue-500"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500"
-              }`}
-            >
-              病患記錄管理
-            </button>
-          </nav>
-        </div>
-
         {/* 內容區域 */}
-        {activeTab === "basic-info" && <PatientBasicInfoSearch />}
-
-        {activeTab === "patient-records" && (
-          <>
-            {/* 操作按鈕 */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                {showForm ? "隱藏表單" : "新增病患記錄"}
-              </button>
-              <button
-                onClick={loadPatients}
-                disabled={loading}
-                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                {loading ? "載入中..." : "重新載入"}
-              </button>
-            </div>
-
-            {/* 表單區域 */}
-            {showForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-                <PatientForm
-                  onSubmit={handleFormSubmit}
-                  initialData={
-                    editingPatient
-                      ? {
-                          name: editingPatient.name,
-                          age: editingPatient.age,
-                          phone: editingPatient.phone,
-                          diagnosis: editingPatient.diagnosis,
-                        }
-                      : undefined
-                  }
-                  isEditing={!!editingPatient}
-                  onCancel={handleCancel}
-                />
-              </div>
-            )}
-
-            {/* 列表區域 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-              <PatientList
-                patients={patients}
-                onEdit={handleEditPatient}
-                onDelete={handleDeletePatient}
-                loading={loading}
-              />
-            </div>
-          </>
-        )}
+        <PatientBasicInfoSearch />
       </div>
     </div>
   );

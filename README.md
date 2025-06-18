@@ -1,6 +1,12 @@
-# 醫療記錄系統
+# 醫療記錄系統 - 病人基本檔查詢
 
-一個使用 React + Vite 前端和 Express 後端的全端 TypeScript 專案。
+一個使用 React + Vite 前端和 Express 後端的全端 TypeScript 專案，專注於病人基本檔資料查詢功能。
+
+## 功能特色
+
+- **病人基本檔查詢**：根據病歷號查詢病人基本資料
+- **響應式設計**：支援桌面和行動裝置
+- **即時狀態檢查**：顯示後端連接狀態
 
 ## 技術棧
 
@@ -10,13 +16,15 @@
 - Vite 6
 - TypeScript
 - Axios (HTTP 客戶端)
+- Tailwind CSS (UI 樣式)
 
 ### 後端
 
 - Express 5
 - TypeScript
+- Prisma (資料庫 ORM)
+- PostgreSQL (資料庫)
 - CORS 支援
-- Node.js
 
 ### 工具
 
@@ -106,9 +114,51 @@ pnpm run dev:frontend
 
 ## API 端點
 
+### 基本 API
+
 - `GET /` - 基本訊息
 - `GET /health` - 健康檢查
 - `GET /api/test` - 測試 API
+
+### 病人基本檔 API
+
+- `GET /api/patient-basic-info/:mrn` - 根據病歷號查詢病人基本資料
+- `POST /api/patient-basic-info` - 新增病人基本資料
+- `PUT /api/patient-basic-info/:mrn` - 更新病人基本資料
+
+## 資料庫結構
+
+### PatientBasicInfo 表格
+
+```sql
+CREATE TABLE "patient_basic_info" (
+    "id" SERIAL PRIMARY KEY,
+    "mrn" TEXT UNIQUE NOT NULL,        -- 病歷號
+    "ptName" TEXT NOT NULL,            -- 病人姓名
+    "ptNameFull" TEXT,                 -- 病人全名
+    "birthDate" TIMESTAMP(3),          -- 出生日期
+    "gender" TEXT,                     -- 性別代碼
+    "genderName" TEXT,                 -- 性別名稱
+    "maritalStatus" TEXT,              -- 婚姻狀況代碼
+    "maritalStatusName" TEXT,          -- 婚姻狀況名稱
+    "email" TEXT,                      -- 電子郵件
+    "educationNo" TEXT,                -- 教育程度代碼
+    "educationNoName" TEXT,            -- 教育程度名稱
+    "lowIncome" TEXT,                  -- 低收入戶代碼
+    "lowIncomeName" TEXT,              -- 低收入戶名稱
+    "nationalityCode" TEXT,            -- 國籍代碼
+    "nationalityCodeName" TEXT,        -- 國籍名稱
+    "mainLang" TEXT,                   -- 主要語言代碼
+    "mainLangName" TEXT,               -- 主要語言名稱
+    "religion" TEXT,                   -- 宗教代碼
+    "religionName" TEXT,               -- 宗教名稱
+    "idType" TEXT,                     -- 身份證類型代碼
+    "idTypeName" TEXT,                 -- 身份證類型名稱
+    "idNo" TEXT,                       -- 身份證號
+    "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL
+);
+```
 
 ## 開發說明
 
@@ -117,12 +167,28 @@ pnpm run dev:frontend
 - 前端代理設定會將 `/api/*` 請求轉發到後端
 - API 服務位於 `frontend/src/services/api.ts`
 - 使用 Axios 進行 HTTP 請求
+- 主要功能為病人基本檔查詢介面
 
 ### 後端開發
 
 - 使用 TypeScript 開發
 - 支援 CORS 跨域請求
+- 使用 Prisma ORM 管理資料庫
 - 開發模式使用 nodemon 自動重啟
+
+### 資料庫設定
+
+確保您已設定 PostgreSQL 資料庫並在 `.env` 檔案中配置 `DATABASE_URL`：
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+```
+
+執行資料庫遷移：
+
+```bash
+cd backend && npx prisma migrate dev
+```
 
 ## 安裝依賴
 
