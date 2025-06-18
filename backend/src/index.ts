@@ -1,43 +1,10 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import { PrismaClient } from "./generated/prisma";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// 病患記錄介面
-interface Patient {
-  id: number;
-  name: string;
-  age: number;
-  phone: string;
-  diagnosis: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 模擬資料庫 (記憶體儲存)
-let patients: Patient[] = [
-  {
-    id: 1,
-    name: "王小明",
-    age: 35,
-    phone: "0912345678",
-    diagnosis: "高血壓",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: "李小華",
-    age: 28,
-    phone: "0987654321",
-    diagnosis: "感冒",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-let nextId = 3;
+const prisma = new PrismaClient();
 
 // 中間件
 app.use(cors());
@@ -61,117 +28,175 @@ app.get("/api/test", (req: Request, res: Response) => {
 // CRUD API 路由
 
 // 取得所有病患記錄 (Read All)
-app.get("/api/patients", (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    data: patients,
-    total: patients.length,
-  });
+app.get("/api/patients", async (req: Request, res: Response) => {
+  try {
+    const patients = await prisma.patient.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json({
+      success: true,
+      data: patients,
+      total: patients.length,
+    });
+  } catch (error) {
+    console.error("Error fetching patients:", error);
+    res.status(500).json({
+      success: false,
+      message: "取得病患記錄時發生錯誤",
+    });
+  }
 });
 
 // 取得單一病患記錄 (Read One)
-app.get("/api/patients/:id", (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const patient = patients.find((p) => p.id === id);
-
-  if (!patient) {
-    res.status(404).json({
-      success: false,
-      message: "找不到病患記錄",
+app.get("/api/patients/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const patient = await prisma.patient.findUnique({
+      where: { id },
     });
-    return;
-  }
 
-  res.json({
-    success: true,
-    data: patient,
-  });
+    if (!patient) {
+      res.status(404).json({
+        success: false,
+        message: "找不到病患記錄",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: patient,
+    });
+  } catch (error) {
+    console.error("Error fetching patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "取得病患記錄時發生錯誤",
+    });
+  }
 });
 
 // 新增病患記錄 (Create)
-app.post("/api/patients", (req: Request, res: Response) => {
-  const { name, age, phone, diagnosis } = req.body;
+app.post("/api/patients", async (req: Request, res: Response) => {
+  try {
+    const { name, age, phone, diagnosis } = req.body;
 
-  // 簡單驗證
-  if (!name || !age || !phone || !diagnosis) {
-    res.status(400).json({
-      success: false,
-      message: "請提供所有必要欄位：姓名、年齡、電話、診斷",
+    // 簡單驗證
+    if (!name || !age || !phone || !diagnosis) {
+      res.status(400).json({
+        success: false,
+        message: "請提供所有必要欄位：姓名、年齡、電話、診斷",
+      });
+      return;
+    }
+
+    const newPatient = await prisma.patient.create({
+      data: {
+        name,
+        age: parseInt(age),
+        phone,
+        diagnosis,
+      },
     });
-    return;
+
+    res.status(201).json({
+      success: true,
+      message: "病患記錄新增成功",
+      data: newPatient,
+    });
+  } catch (error) {
+    console.error("Error creating patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "新增病患記錄時發生錯誤",
+    });
   }
-
-  const newPatient: Patient = {
-    id: nextId++,
-    name,
-    age: parseInt(age),
-    phone,
-    diagnosis,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  patients.push(newPatient);
-
-  res.status(201).json({
-    success: true,
-    message: "病患記錄新增成功",
-    data: newPatient,
-  });
 });
 
 // 更新病患記錄 (Update)
-app.put("/api/patients/:id", (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const { name, age, phone, diagnosis } = req.body;
+app.put("/api/patients/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, age, phone, diagnosis } = req.body;
 
-  const patientIndex = patients.findIndex((p) => p.id === id);
-
-  if (patientIndex === -1) {
-    res.status(404).json({
-      success: false,
-      message: "找不到病患記錄",
+    // 檢查病患是否存在
+    const existingPatient = await prisma.patient.findUnique({
+      where: { id },
     });
-    return;
+
+    if (!existingPatient) {
+      res.status(404).json({
+        success: false,
+        message: "找不到病患記錄",
+      });
+      return;
+    }
+
+    // 更新病患記錄
+    const updatedPatient = await prisma.patient.update({
+      where: { id },
+      data: {
+        name: name || existingPatient.name,
+        age: age ? parseInt(age) : existingPatient.age,
+        phone: phone || existingPatient.phone,
+        diagnosis: diagnosis || existingPatient.diagnosis,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: "病患記錄更新成功",
+      data: updatedPatient,
+    });
+  } catch (error) {
+    console.error("Error updating patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "更新病患記錄時發生錯誤",
+    });
   }
-
-  // 更新病患記錄
-  patients[patientIndex] = {
-    ...patients[patientIndex],
-    name: name || patients[patientIndex].name,
-    age: age ? parseInt(age) : patients[patientIndex].age,
-    phone: phone || patients[patientIndex].phone,
-    diagnosis: diagnosis || patients[patientIndex].diagnosis,
-    updatedAt: new Date().toISOString(),
-  };
-
-  res.json({
-    success: true,
-    message: "病患記錄更新成功",
-    data: patients[patientIndex],
-  });
 });
 
 // 刪除病患記錄 (Delete)
-app.delete("/api/patients/:id", (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const patientIndex = patients.findIndex((p) => p.id === id);
+app.delete("/api/patients/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
 
-  if (patientIndex === -1) {
-    res.status(404).json({
-      success: false,
-      message: "找不到病患記錄",
+    // 檢查病患是否存在
+    const existingPatient = await prisma.patient.findUnique({
+      where: { id },
     });
-    return;
+
+    if (!existingPatient) {
+      res.status(404).json({
+        success: false,
+        message: "找不到病患記錄",
+      });
+      return;
+    }
+
+    const deletedPatient = await prisma.patient.delete({
+      where: { id },
+    });
+
+    res.json({
+      success: true,
+      message: "病患記錄刪除成功",
+      data: deletedPatient,
+    });
+  } catch (error) {
+    console.error("Error deleting patient:", error);
+    res.status(500).json({
+      success: false,
+      message: "刪除病患記錄時發生錯誤",
+    });
   }
+});
 
-  const deletedPatient = patients.splice(patientIndex, 1)[0];
-
-  res.json({
-    success: true,
-    message: "病患記錄刪除成功",
-    data: deletedPatient,
-  });
+// 優雅關閉資料庫連線
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
 });
 
 app.listen(PORT, () => {
