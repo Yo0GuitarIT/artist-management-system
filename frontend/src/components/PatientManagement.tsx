@@ -165,32 +165,23 @@ export default function PatientManagement() {
     setError("");
 
     try {
-      // 同時處理基本資料和國籍資料
-      const [detailResponse, nationalityResponse] = await Promise.all([
-        apiService.patientDetail.createOrUpdate(editingDetail),
-        apiService.patientNationality.batchUpdate({
-          mrn: editingDetail.mrn,
-          nationalities: editingNationalities,
-        }),
-      ]);
+      // 將國籍資料加入到編輯資料中，統一送到一個 API
+      const dataToSave = {
+        ...editingDetail,
+        nationalities: editingNationalities,
+      };
 
-      if (detailResponse.success && nationalityResponse.success) {
+      const response = await apiService.patientDetail.createOrUpdate(
+        dataToSave
+      );
+
+      if (response.success && response.data) {
         // 更新本地狀態
-        if (detailResponse.data) {
-          const nationalities = Array.isArray(nationalityResponse.data)
-            ? nationalityResponse.data
-            : [];
+        const updatedData = response.data;
 
-          setPatientDetail({
-            ...detailResponse.data,
-            nationalities,
-          });
-          setEditingDetail({
-            ...detailResponse.data,
-            nationalities,
-          });
-          setEditingNationalities(nationalities);
-        }
+        setPatientDetail(updatedData);
+        setEditingDetail(updatedData);
+        setEditingNationalities(updatedData.nationalities || []);
 
         // 重新查詢病人資料以刷新顯示
         const basicResponse = await apiService.patientBasicInfo.getByMrn(
@@ -202,9 +193,7 @@ export default function PatientManagement() {
 
         alert("儲存成功！");
       } else {
-        setError(
-          detailResponse.message || nationalityResponse.message || "儲存失敗"
-        );
+        setError(response.message || "儲存失敗");
       }
     } catch (error) {
       console.error("儲存病人資料失敗:", error);

@@ -120,7 +120,7 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
     // 從 patientDetailData 中排除關聯欄位，只保留 PatientDetail 表的直接欄位
     const { nationalities, ...patientDetailFields } = patientDetailData;
 
-    // 使用 transaction 來同時更新明細資料和基本檔案
+    // 使用 transaction 來同時更新明細資料、國籍資料和基本檔案
     const result = await prisma.$transaction(async (tx) => {
       // 更新或創建明細資料
       const patientDetail = await tx.patientDetail.upsert({
@@ -131,6 +131,48 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
           nationalities: true, // 包含國籍資料在回傳結果中
         },
       });
+
+      // 處理國籍資料（如果有提供）
+      let savedNationalities = patientDetail.nationalities;
+      if (nationalities && Array.isArray(nationalities)) {
+        // 先刪除該病人的所有現有國籍資料（除了要保留的已存在記錄）
+        const existingIds = nationalities
+          .filter((n) => n.id && n.id < 1000000000) // 只保留真實的 ID（非臨時 ID）
+          .map((n) => n.id);
+
+        await tx.patientNationality.deleteMany({
+          where: {
+            mrn: patientDetailFields.mrn,
+            id: { notIn: existingIds },
+          },
+        });
+
+        // 處理每一筆國籍資料
+        savedNationalities = [];
+        for (const nationality of nationalities) {
+          if (nationality.id && nationality.id < 1000000000) {
+            // 更新現有記錄
+            const updated = await tx.patientNationality.update({
+              where: { id: nationality.id },
+              data: {
+                nationalityCode: nationality.nationalityCode,
+                isPrimary: nationality.isPrimary,
+              },
+            });
+            savedNationalities.push(updated);
+          } else {
+            // 新增記錄
+            const created = await tx.patientNationality.create({
+              data: {
+                mrn: patientDetailFields.mrn,
+                nationalityCode: nationality.nationalityCode,
+                isPrimary: nationality.isPrimary,
+              },
+            });
+            savedNationalities.push(created);
+          }
+        }
+      }
 
       // 獲取代號選項來更新基本檔案中的名稱欄位
       const getCodeOptionName = async (category: string, code: string) => {
@@ -194,6 +236,27 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
         );
       }
 
+      // 處理國籍資料同步到基本檔案
+      if (savedNationalities && savedNationalities.length > 0) {
+        const primaryNationality = savedNationalities.find((n) => n.isPrimary);
+
+        if (primaryNationality) {
+          basicInfoUpdate.nationalityCode = primaryNationality.nationalityCode;
+          basicInfoUpdate.nationalityCodeName = await getCodeOptionName(
+            "nationality",
+            primaryNationality.nationalityCode
+          );
+        } else {
+          // 沒有主要國籍，清空基本檔案的國籍資料
+          basicInfoUpdate.nationalityCode = null;
+          basicInfoUpdate.nationalityCodeName = null;
+        }
+      } else if (nationalities !== undefined) {
+        // 如果明確傳入空陣列，清空基本檔案的國籍資料
+        basicInfoUpdate.nationalityCode = null;
+        basicInfoUpdate.nationalityCodeName = null;
+      }
+
       // 更新基本檔案
       if (Object.keys(basicInfoUpdate).length > 0) {
         await tx.patientBasicInfo.update({
@@ -202,7 +265,11 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
         });
       }
 
-      return patientDetail;
+      // 回傳更新後的明細資料，包含最新的國籍資料
+      return {
+        ...patientDetail,
+        nationalities: savedNationalities,
+      };
     });
 
     res.json({
@@ -219,184 +286,10 @@ app.post("/api/patient-detail", async (req: Request, res: Response) => {
   }
 });
 
-// 國籍資料相關 API
+// 國籍資料相關 API (僅保留刪除功能)
 
-// 取得病人的國籍資料
-app.get(
-  "/api/patient-nationality/:mrn",
-  async (req: Request, res: Response) => {
-    try {
-      const mrn = req.params.mrn;
-
-      const nationalities = await prisma.patientNationality.findMany({
-        where: { mrn },
-        orderBy: [
-          { isPrimary: "desc" }, // 主要國籍排在前面
-          { createdAt: "asc" },
-        ],
-      });
-
-      res.json({
-        success: true,
-        data: nationalities,
-      });
-    } catch (error) {
-      console.error("Error fetching patient nationalities:", error);
-      res.status(500).json({
-        success: false,
-        message: "查詢病人國籍資料時發生錯誤",
-      });
-    }
-  }
-);
-
-// 新增病人國籍
-app.post("/api/patient-nationality", async (req: Request, res: Response) => {
-  try {
-    const { mrn, nationalityCode } = req.body;
-
-    if (!mrn || !nationalityCode) {
-      res.status(400).json({
-        success: false,
-        message: "請提供病歷號和國籍代碼",
-      });
-      return;
-    }
-
-    // 檢查病人是否存在
-    const existingPatient = await prisma.patientDetail.findUnique({
-      where: { mrn },
-    });
-
-    if (!existingPatient) {
-      res.status(400).json({
-        success: false,
-        message: "找不到對應的病人資料",
-      });
-      return;
-    }
-
-    const newNationality = await prisma.patientNationality.create({
-      data: {
-        mrn,
-        nationalityCode,
-        isPrimary: false, // 預設不是主要國籍
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "國籍資料新增成功",
-      data: newNationality,
-    });
-  } catch (error) {
-    console.error("Error creating patient nationality:", error);
-    res.status(500).json({
-      success: false,
-      message: "新增國籍資料時發生錯誤",
-    });
-  }
-});
-
-// 更新國籍資料（主要用於設定主要國籍）
-app.put("/api/patient-nationality/:id", async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id);
-    const { nationalityCode, isPrimary } = req.body;
-
-    const nationality = await prisma.patientNationality.findUnique({
-      where: { id },
-    });
-
-    if (!nationality) {
-      res.status(404).json({
-        success: false,
-        message: "找不到指定的國籍資料",
-      });
-      return;
-    }
-
-    // 使用 transaction 來處理主要國籍的唯一性
-    const result = await prisma.$transaction(async (tx) => {
-      // 如果要設定為主要國籍，先將同一病人的其他國籍設為非主要
-      if (isPrimary) {
-        await tx.patientNationality.updateMany({
-          where: {
-            mrn: nationality.mrn,
-            id: { not: id },
-          },
-          data: { isPrimary: false },
-        });
-      }
-
-      // 更新指定的國籍資料
-      const updatedNationality = await tx.patientNationality.update({
-        where: { id },
-        data: {
-          nationalityCode: nationalityCode || nationality.nationalityCode,
-          isPrimary: isPrimary ?? nationality.isPrimary,
-        },
-      });
-
-      // 如果設定為主要國籍，同步更新到基本檔案
-      if (isPrimary) {
-        const codeOption = await tx.codeOption.findUnique({
-          where: {
-            category_code: {
-              category: "nationality",
-              code: updatedNationality.nationalityCode,
-            },
-          },
-        });
-
-        await tx.patientBasicInfo.update({
-          where: { mrn: nationality.mrn },
-          data: {
-            nationalityCode: updatedNationality.nationalityCode,
-            nationalityCodeName:
-              codeOption?.name || updatedNationality.nationalityCode,
-          },
-        });
-      }
-
-      // 如果取消主要國籍且沒有其他主要國籍，清除基本檔案的國籍資料
-      if (isPrimary === false) {
-        const primaryNationality = await tx.patientNationality.findFirst({
-          where: {
-            mrn: nationality.mrn,
-            isPrimary: true,
-          },
-        });
-
-        if (!primaryNationality) {
-          await tx.patientBasicInfo.update({
-            where: { mrn: nationality.mrn },
-            data: {
-              nationalityCode: null,
-              nationalityCodeName: null,
-            },
-          });
-        }
-      }
-
-      return updatedNationality;
-    });
-
-    res.json({
-      success: true,
-      message: "國籍資料更新成功",
-      data: result,
-    });
-  } catch (error) {
-    console.error("Error updating patient nationality:", error);
-    res.status(500).json({
-      success: false,
-      message: "更新國籍資料時發生錯誤",
-    });
-  }
-});
-
-// 刪除國籍資料
+// 刪除病人國籍
+// 刪除病人國籍
 app.delete(
   "/api/patient-nationality/:id",
   async (req: Request, res: Response) => {
@@ -444,109 +337,6 @@ app.delete(
       res.status(500).json({
         success: false,
         message: "刪除國籍資料時發生錯誤",
-      });
-    }
-  }
-);
-
-// 批次處理國籍資料
-app.post(
-  "/api/patient-nationality/batch",
-  async (req: Request, res: Response) => {
-    try {
-      const { mrn, nationalities } = req.body;
-
-      if (!mrn || !Array.isArray(nationalities)) {
-        res.status(400).json({
-          success: false,
-          message: "請提供有效的病歷號和國籍資料",
-        });
-        return;
-      }
-
-      const result = await prisma.$transaction(async (tx) => {
-        // 先刪除該病人的所有現有國籍資料（除了要保留的已存在記錄）
-        const existingIds = nationalities
-          .filter((n) => n.id && n.id < 1000000000) // 只保留真實的 ID（非臨時 ID）
-          .map((n) => n.id);
-
-        await tx.patientNationality.deleteMany({
-          where: {
-            mrn,
-            id: { notIn: existingIds },
-          },
-        });
-
-        // 處理每一筆國籍資料
-        const savedNationalities = [];
-        for (const nationality of nationalities) {
-          if (nationality.id && nationality.id < 1000000000) {
-            // 更新現有記錄
-            const updated = await tx.patientNationality.update({
-              where: { id: nationality.id },
-              data: {
-                nationalityCode: nationality.nationalityCode,
-                isPrimary: nationality.isPrimary,
-              },
-            });
-            savedNationalities.push(updated);
-          } else {
-            // 新增記錄
-            const created = await tx.patientNationality.create({
-              data: {
-                mrn,
-                nationalityCode: nationality.nationalityCode,
-                isPrimary: nationality.isPrimary,
-              },
-            });
-            savedNationalities.push(created);
-          }
-        }
-
-        // 找出主要國籍並同步到基本檔案
-        const primaryNationality = savedNationalities.find((n) => n.isPrimary);
-
-        if (primaryNationality) {
-          const codeOption = await tx.codeOption.findUnique({
-            where: {
-              category_code: {
-                category: "nationality",
-                code: primaryNationality.nationalityCode,
-              },
-            },
-          });
-
-          await tx.patientBasicInfo.update({
-            where: { mrn },
-            data: {
-              nationalityCode: primaryNationality.nationalityCode,
-              nationalityCodeName: codeOption?.name || "",
-            },
-          });
-        } else {
-          // 沒有主要國籍，清空基本檔案的國籍資料
-          await tx.patientBasicInfo.update({
-            where: { mrn },
-            data: {
-              nationalityCode: null,
-              nationalityCodeName: null,
-            },
-          });
-        }
-
-        return savedNationalities;
-      });
-
-      res.json({
-        success: true,
-        message: "國籍資料批次處理成功",
-        data: result,
-      });
-    } catch (error) {
-      console.error("Error batch processing patient nationalities:", error);
-      res.status(500).json({
-        success: false,
-        message: "批次處理國籍資料時發生錯誤",
       });
     }
   }
