@@ -233,11 +233,8 @@ export default function ArtistManagement() {
                 );
                 setEditingNationalities(updatedNationalities);
 
-                // 重新載入藝人基本資料以確保資料一致性
-                if (searchedArtistId) {
-                  // 使用 React Query 的 invalidateQueries 會更高效
-                  // handleSearch 會自動被 React Query 觸發
-                }
+                // React Query 的 useDeleteArtistNationality mutation
+                // 會自動 invalidateQueries 並重新載入藝人資料
               }}
             />
           )}
