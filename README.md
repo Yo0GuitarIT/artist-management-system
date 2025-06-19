@@ -6,9 +6,11 @@
 
 - **藝人基本檔查詢**：根據藝人編號查詢藝人基本資料
 - **藝人詳細資料管理**：編輯藝人詳細資訊，包含藝名、本名、出生日期等
-- **國籍資料管理**：支援多重國籍設定
+- **多重資料管理**：支援國籍、語言、宗教、身分證件等多重資料設定
+- **即時通知系統**：使用 Toast 通知提供友善的操作回饋
 - **響應式設計**：支援桌面和行動裝置
 - **即時狀態檢查**：顯示後端連接狀態
+- **資料驗證**：完整的前後端資料驗證機制
 
 ## 技術棧
 
@@ -19,7 +21,8 @@
 - TypeScript
 - Axios (HTTP 客戶端)
 - Tailwind CSS (UI 樣式)
-- TanStack Query (狀態管理)
+- TanStack Query (狀態管理與快取)
+- React Hot Toast (通知系統)
 
 ### 後端
 
@@ -38,19 +41,45 @@
 ## 專案結構
 
 ```
-medical-record/
+artist-management-system/
 ├── .gitignore         # 統一的 Git 忽略文件
 ├── package.json       # 根目錄腳本管理
 ├── README.md          # 專案說明
-├── start-dev.sh       # 開發環境啟動腳本
 ├── frontend/          # React + Vite 前端
 │   ├── src/
-│   │   ├── services/  # API 服務
-│   │   └── ...
+│   │   ├── components/    # React 元件
+│   │   │   ├── ArtistInfoCard.tsx
+│   │   │   ├── ArtistManagement.tsx
+│   │   │   ├── BasicInfoCard.tsx
+│   │   │   ├── IdDocumentCard.tsx
+│   │   │   ├── LanguageCard.tsx
+│   │   │   ├── NationalityCard.tsx
+│   │   │   ├── ReligionCard.tsx
+│   │   │   ├── SearchGroup.tsx
+│   │   │   └── SystemStatus.tsx
+│   │   ├── context/       # React Context 狀態管理
+│   │   │   ├── ArtistManagementContext.tsx
+│   │   │   ├── ArtistManagementProvider.tsx
+│   │   │   ├── index.ts
+│   │   │   └── useArtistManagement.ts
+│   │   ├── hooks/         # 自定義 React Hooks
+│   │   │   ├── useArtistMutations.ts
+│   │   │   └── useArtistQueries.ts
+│   │   ├── services/      # API 服務
+│   │   │   └── api.ts
+│   │   ├── types/         # TypeScript 型別定義
+│   │   │   └── artistBasicInfo.ts
+│   │   ├── App.tsx        # 主應用程式元件
+│   │   ├── main.tsx       # 應用程式入口點
+│   │   └── index.css      # 全域樣式
 │   └── package.json
 └── backend/           # Express 後端
+    ├── prisma/
+    │   ├── schema.prisma  # Prisma 資料庫綱要
+    │   └── migrations/    # 資料庫遷移檔案
     ├── src/
-    │   └── index.ts   # 主伺服器文件
+    │   ├── index.ts       # 主伺服器文件
+    │   └── seed.ts        # 資料庫種子資料
     └── package.json
 ```
 
@@ -121,63 +150,121 @@ pnpm run dev:frontend
 
 - `GET /` - 基本訊息
 - `GET /health` - 健康檢查
-- `GET /api/test` - 測試 API
 
-### 藝人基本檔 API
+### 藝人資料 API
 
-- `GET /api/artist-basic-info/:artistId` - 根據藝人 ID 查詢藝人基本資料
-- `POST /api/artist-basic-info` - 新增藝人基本資料
-- `PUT /api/artist-basic-info/:artistId` - 更新藝人基本資料
+- `GET /api/artist-basic-info/:artistId` - 根據藝人 ID 查詢藝人基本資料（包含完整的詳細資料）
+- `POST /api/artist-detail` - 新增或更新藝人詳細資料
+
+### 代號選項 API
+
+- `GET /api/code-options/:category` - 取得特定分類的代號選項
+  - 支援的分類：`biological_gender`, `marital_status`, `blood_type_abo`, `blood_type_rh`, `education_level`, `income_level`, `nationality`, `language`, `religion`, `id_type`
+
+### 藝人國籍 API
+
+- `DELETE /api/artist-nationality/:id` - 刪除指定的藝人國籍資料
+
+### 藝人語言 API
+
+- `DELETE /api/artist-language/:id` - 刪除指定的藝人語言資料
+
+### 藝人宗教 API
+
+- `DELETE /api/artist-religion/:id` - 刪除指定的藝人宗教資料
+
+### 藝人身分證件 API
+
+- `DELETE /api/artist-id-document/:id` - 刪除指定的藝人身分證件資料
 
 ## 資料庫結構
 
-### ArtistBasicInfo 表格
+本專案使用 Prisma ORM 管理 PostgreSQL 資料庫，主要包含以下資料表：
 
-```sql
-CREATE TABLE "artist_basic_info" (
-    "id" SERIAL PRIMARY KEY,
-    "artistId" TEXT UNIQUE NOT NULL,   -- 藝人ID
-    "ptName" TEXT NOT NULL,            -- 藝人姓名
-    "ptNameFull" TEXT,                 -- 藝人全名
-    "birthDate" TIMESTAMP(3),          -- 出生日期
-    "gender" TEXT,                     -- 性別代碼
-    "genderName" TEXT,                 -- 性別名稱
-    "maritalStatus" TEXT,              -- 婚姻狀況代碼
-    "maritalStatusName" TEXT,          -- 婚姻狀況名稱
-    "email" TEXT,                      -- 電子郵件
-    "educationNo" TEXT,                -- 教育程度代碼
-    "educationNoName" TEXT,            -- 教育程度名稱
-    "lowIncome" TEXT,                  -- 低收入戶代碼
-    "lowIncomeName" TEXT,              -- 低收入戶名稱
-    "nationalityCode" TEXT,            -- 國籍代碼
-    "nationalityCodeName" TEXT,        -- 國籍名稱
-    "mainLang" TEXT,                   -- 主要語言代碼
-    "mainLangName" TEXT,               -- 主要語言名稱
-    "religion" TEXT,                   -- 宗教代碼
-    "religionName" TEXT,               -- 宗教名稱
-    "idType" TEXT,                     -- 身份證類型代碼
-    "idTypeName" TEXT,                 -- 身份證類型名稱
-    "idNo" TEXT,                       -- 身份證號
-    "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL
-);
+### 核心資料表
+
+#### ArtistBasicInfo 藝人基本資料表
+- 儲存藝人的基本檔資料
+- 包含藝人編號、藝名、本名、出生日期等基本資訊
+
+#### ArtistDetail 藝人詳細資料表
+- 儲存藝人的詳細資料
+- 包含生理性別、婚姻狀況、血型、教育程度、收入水準等
+
+#### ArtistNationality 藝人國籍資料表
+- 支援多重國籍設定
+- 可設定主要國籍
+
+#### ArtistLanguage 藝人語言資料表
+- 支援多語言設定
+- 可設定主要語言
+
+#### ArtistReligion 藝人宗教資料表
+- 支援多宗教設定
+- 可設定主要宗教
+
+#### ArtistIdDocument 藝人身分證件資料表
+- 支援多種身分證件
+- 可設定主要證件
+
+#### CodeOption 代號選項對照表
+- 統一管理各種代號選項
+- 支援分類管理和顯示順序設定
+
+### 資料表關聯
+
 ```
+ArtistBasicInfo (1) ←→ (1) ArtistDetail
+                              ↓
+                     ┌────────┴────────┐
+                     ↓                 ↓
+            ArtistNationality    ArtistLanguage
+                     ↓                 ↓
+            ArtistReligion     ArtistIdDocument
+```
+
+### 主要特色
+
+- **關聯式設計**：使用外鍵確保資料完整性
+- **多重資料支援**：國籍、語言、宗教、證件都支援多筆資料
+- **主要標記**：各類資料都可設定主要項目
+- **代號統一管理**：所有選項代號集中在 CodeOption 表管理
+- **時間戳記**：所有表都包含建立時間和更新時間
 
 ## 開發說明
 
 ### 前端開發
 
-- 前端代理設定會將 `/api/*` 請求轉發到後端
-- API 服務位於 `frontend/src/services/api.ts`
-- 使用 Axios 進行 HTTP 請求
-- 主要功能為藝人基本檔查詢介面
+- **技術架構**：使用 React 19 + TypeScript + Vite 6
+- **狀態管理**：採用 TanStack Query 進行伺服器狀態管理，React Context 進行本地狀態管理
+- **UI 框架**：使用 Tailwind CSS 4 提供響應式設計
+- **通知系統**：整合 React Hot Toast 提供用戶友善的操作回饋
+- **API 通訊**：使用 Axios 進行 HTTP 請求，支援自動重試和錯誤處理
+- **代理設定**：前端開發伺服器會將 `/api/*` 請求轉發到後端
+
+#### 主要功能模組
+
+- **搜尋模組**：藝人編號搜尋功能
+- **基本資料卡**：顯示和編輯藝人基本資訊
+- **國籍管理卡**：多重國籍的新增、編輯、刪除
+- **語言管理卡**：多語言的新增、編輯、刪除
+- **宗教管理卡**：多宗教的新增、編輯、刪除
+- **證件管理卡**：多證件的新增、編輯、刪除
+- **系統狀態**：即時顯示後端連接狀態
 
 ### 後端開發
 
-- 使用 TypeScript 開發
-- 支援 CORS 跨域請求
-- 使用 Prisma ORM 管理資料庫
-- 開發模式使用 nodemon 自動重啟
+- **技術架構**：使用 Express 5 + TypeScript + Prisma ORM
+- **資料庫**：PostgreSQL，使用 Prisma 進行資料庫管理和遷移
+- **API 設計**：RESTful API，支援 CORS 跨域請求
+- **錯誤處理**：統一的錯誤處理機制和回應格式
+- **開發工具**：使用 nodemon 實現開發模式自動重啟
+
+#### 開發模式啟動
+
+1. 後端使用 nodemon 監控檔案變更並自動重啟
+2. 前端使用 Vite 的 HMR (Hot Module Replacement) 快速更新
+3. 資料庫變更可透過 Prisma Migrate 進行版本控制
 
 ### 資料庫設定
 
@@ -214,3 +301,40 @@ cd frontend && pnpm build
 # 後端建置
 cd backend && pnpm build
 ```
+
+## 使用說明
+
+### 基本操作流程
+
+1. **搜尋藝人**：在搜尋框輸入藝人編號並點擊搜尋
+2. **檢視資料**：搜尋成功後會顯示藝人的完整資料
+3. **編輯資料**：點擊各區塊的編輯按鈕進行資料修改
+4. **新增多重資料**：在國籍、語言、宗教、證件區塊點擊「新增」按鈕
+5. **刪除資料**：點擊各項目的刪除按鈕移除不需要的資料
+6. **儲存變更**：完成編輯後點擊「儲存」按鈕
+
+### 功能特色
+
+- **即時回饋**：所有操作都會顯示 Toast 通知
+- **資料驗證**：前後端都有完整的資料驗證機制
+- **響應式設計**：支援桌面和行動裝置瀏覽
+- **狀態管理**：使用 TanStack Query 提供快取和自動重新載入
+
+## 注意事項
+
+- 確保 PostgreSQL 資料庫服務正在運行
+- 首次使用前請執行資料庫遷移
+- 開發模式下前後端需要同時啟動
+- 生產環境部署時請設定適當的環境變數
+
+## 貢獻指南
+
+1. Fork 此專案
+2. 建立功能分支 (`git checkout -b feature/新功能`)
+3. 提交變更 (`git commit -am '新增某功能'`)
+4. 推送到分支 (`git push origin feature/新功能`)
+5. 建立 Pull Request
+
+## 授權
+
+此專案採用 MIT 授權條款。
