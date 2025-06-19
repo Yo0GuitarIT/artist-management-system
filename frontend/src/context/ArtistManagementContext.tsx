@@ -6,10 +6,11 @@ import type {
   ArtistNationality,
   ArtistLanguage,
   ArtistReligion,
+  ArtistIdDocument,
   CodeOption,
 } from "../types/artistBasicInfo";
 import { useArtistBasicInfo, useCodeOptions } from "../hooks/useArtistQueries";
-import { useUpdateArtistDetail } from "../hooks/useArtistMutatinons";
+import { useUpdateArtistDetail } from "../hooks/useArtistMutations";
 
 // 代號選項映射介面
 interface CodeOptionsMap {
@@ -22,6 +23,7 @@ interface CodeOptionsMap {
   nationality: CodeOption[];
   language: CodeOption[];
   religion: CodeOption[];
+  id_type: CodeOption[];
 }
 
 // Context 狀態介面
@@ -35,6 +37,7 @@ interface ArtistManagementState {
   editingNationalities: ArtistNationality[];
   editingLanguages: ArtistLanguage[];
   editingReligions: ArtistReligion[];
+  editingIdDocuments: ArtistIdDocument[];
   isSaving: boolean;
 
   // 錯誤處理
@@ -50,10 +53,12 @@ interface ArtistManagementActions {
   handleSearch: (artistId: string) => void;
   handleSave: () => void;
   handleCancel: () => void;
+  handleRefresh: () => void;
   setEditingDetail: (detail: ArtistDetail | null) => void;
   setEditingNationalities: (nationalities: ArtistNationality[]) => void;
   setEditingLanguages: (languages: ArtistLanguage[]) => void;
   setEditingReligions: (religions: ArtistReligion[]) => void;
+  setEditingIdDocuments: (idDocuments: ArtistIdDocument[]) => void;
   setError: (error: string) => void;
   clearError: () => void;
   getOptionName: (category: keyof CodeOptionsMap, code: string) => string;
@@ -90,6 +95,9 @@ export function ArtistManagementProvider({
   const [editingReligions, setEditingReligions] = useState<ArtistReligion[]>(
     []
   );
+  const [editingIdDocuments, setEditingIdDocuments] = useState<
+    ArtistIdDocument[]
+  >([]);
 
   // React Query hooks
   const artistQuery = useArtistBasicInfo(searchedArtistId || null);
@@ -102,6 +110,7 @@ export function ArtistManagementProvider({
   const nationalityQuery = useCodeOptions("nationality");
   const languageQuery = useCodeOptions("language");
   const religionQuery = useCodeOptions("religion");
+  const idTypeQuery = useCodeOptions("id_type");
 
   const updateArtistMutation = useUpdateArtistDetail();
 
@@ -117,6 +126,7 @@ export function ArtistManagementProvider({
       nationality: nationalityQuery.data?.data || [],
       language: languageQuery.data?.data || [],
       religion: religionQuery.data?.data || [],
+      id_type: idTypeQuery.data?.data || [],
     }),
     [
       biologicalGenderQuery.data,
@@ -128,6 +138,7 @@ export function ArtistManagementProvider({
       nationalityQuery.data,
       languageQuery.data,
       religionQuery.data,
+      idTypeQuery.data,
     ]
   );
 
@@ -155,6 +166,7 @@ export function ArtistManagementProvider({
         setEditingNationalities(basicInfo.artistDetail.nationalities || []);
         setEditingLanguages(basicInfo.artistDetail.languages || []);
         setEditingReligions(basicInfo.artistDetail.religions || []);
+        setEditingIdDocuments(basicInfo.artistDetail.idDocuments || []);
       } else {
         // 建立空白明細資料供編輯
         const emptyDetail: ArtistDetail = {
@@ -178,6 +190,7 @@ export function ArtistManagementProvider({
         setEditingNationalities([]);
         setEditingLanguages([]);
         setEditingReligions([]);
+        setEditingIdDocuments([]);
       }
     }
   }, [artistQuery.data, searchedArtistId]);
@@ -186,6 +199,13 @@ export function ArtistManagementProvider({
   const handleSearch = (artistId: string) => {
     setError("");
     setSearchedArtistId(artistId);
+  };
+
+  const handleRefresh = () => {
+    if (searchedArtistId) {
+      // 重新載入當前藝人的資料
+      artistQuery.refetch();
+    }
   };
 
   const handleSave = () => {
@@ -204,12 +224,17 @@ export function ArtistManagementProvider({
         nationalities: editingNationalities,
         languages: editingLanguages,
         religions: editingReligions,
+        idDocuments: editingIdDocuments,
       },
       {
         onSuccess: (response) => {
           if (response.success) {
             alert("儲存成功！");
             // React Query hook 會自動 invalidate 快取並重新載入資料
+            // 額外確保資料更新
+            setTimeout(() => {
+              handleRefresh();
+            }, 100);
           } else {
             setError(response.message || "儲存失敗");
           }
@@ -228,6 +253,7 @@ export function ArtistManagementProvider({
       setEditingNationalities(artistDetail.nationalities || []);
       setEditingLanguages(artistDetail.languages || []);
       setEditingReligions(artistDetail.religions || []);
+      setEditingIdDocuments(artistDetail.idDocuments || []);
     } else if (artistBasicInfo) {
       // 重新建立空白明細資料
       const basicInfo: ArtistBasicInfo = artistBasicInfo;
@@ -252,11 +278,13 @@ export function ArtistManagementProvider({
       setEditingNationalities([]);
       setEditingLanguages([]);
       setEditingReligions([]);
+      setEditingIdDocuments([]);
     } else {
       setEditingDetail(null);
       setEditingNationalities([]);
       setEditingLanguages([]);
       setEditingReligions([]);
+      setEditingIdDocuments([]);
     }
   };
 
@@ -282,6 +310,7 @@ export function ArtistManagementProvider({
     editingNationalities,
     editingLanguages,
     editingReligions,
+    editingIdDocuments,
     isSaving,
     error,
     artistBasicInfo,
@@ -291,10 +320,12 @@ export function ArtistManagementProvider({
     handleSearch,
     handleSave,
     handleCancel,
+    handleRefresh,
     setEditingDetail,
     setEditingNationalities,
     setEditingLanguages,
     setEditingReligions,
+    setEditingIdDocuments,
     setError,
     clearError,
     getOptionName,

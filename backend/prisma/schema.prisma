@@ -78,6 +78,9 @@ model ArtistDetail {
   
   // 關聯到宗教資料
   religions             ArtistReligion[]
+  
+  // 關聯到身份證件資料
+  idDocuments           ArtistIdDocument[]
 
   @@map("artist_detail")
 }
@@ -125,6 +128,22 @@ model ArtistReligion {
   artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
 
   @@map("artist_religion")
+}
+
+// 藝人身份證件資料表
+model ArtistIdDocument {
+  id                    Int      @id @default(autoincrement())
+  artistId              String   // 藝人編號 (外鍵)
+  idType                String   // 證件類型代碼
+  idNumber              String   // 證件號碼
+  isPrimary             Boolean  @default(false) // 是否為主要證件
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // 關聯到藝人明細資料
+  artistDetail          ArtistDetail @relation(fields: [artistId], references: [artistId], onDelete: Cascade)
+
+  @@map("artist_id_document")
 }
 
 // 代號選項對照表

@@ -5,6 +5,7 @@ import type {
   ArtistNationality,
   ArtistLanguage,
   ArtistReligion,
+  ArtistIdDocument,
 } from "../types/artistBasicInfo";
 import { QUERY_KEYS } from "./useArtistQueries";
 
@@ -18,12 +19,14 @@ export function useUpdateArtistDetail() {
       nationalities: ArtistNationality[];
       languages: ArtistLanguage[];
       religions: ArtistReligion[];
+      idDocuments: ArtistIdDocument[];
     }) => {
       const dataToSave = {
         ...data.detail,
         nationalities: data.nationalities,
         languages: data.languages,
         religions: data.religions,
+        idDocuments: data.idDocuments,
       };
       return apiService.artistDetail.createOrUpdate(dataToSave);
     },

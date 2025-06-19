@@ -4,6 +4,7 @@ import BasicInfoCard from "./BasicInfoCard";
 import NationalityCard from "./NationalityCard";
 import LanguageCard from "./LanguageCard";
 import ReligionCard from "./ReligionCard";
+import IdDocumentCard from "./IdDocumentCard";
 import SearchGroup from "./SearchGroup";
 
 // 主要的管理元件內容
@@ -32,6 +33,9 @@ function ArtistManagementContent() {
 
           {/* 宗教資料卡片 */}
           <ReligionCard />
+
+          {/* 身份證件資料卡片 */}
+          <IdDocumentCard />
         </div>
       </div>
     </div>

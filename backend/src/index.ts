@@ -37,6 +37,7 @@ app.get(
               nationalities: true, // 包含國籍資料
               languages: true, // 包含語言資料
               religions: true, // 包含宗教資料
+              idDocuments: true, // 包含身份證件資料
             },
           },
         },
@@ -123,7 +124,13 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
     }
 
     // 從 artistDetailData 中排除關聯欄位，只保留 ArtistDetail 表的直接欄位
-    const { nationalities, languages, religions, ...artistDetailFields } = artistDetailData;
+    const {
+      nationalities,
+      languages,
+      religions,
+      idDocuments,
+      ...artistDetailFields
+    } = artistDetailData;
 
     // 使用 transaction 來同時更新明細資料、國籍資料和基本檔案
     const result = await prisma.$transaction(async (tx) => {
@@ -136,6 +143,7 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
           nationalities: true, // 包含國籍資料在回傳結果中
           languages: true, // 包含語言資料在回傳結果中
           religions: true, // 包含宗教資料在回傳結果中
+          idDocuments: true, // 包含身份證件資料在回傳結果中
         },
       });
 
@@ -265,6 +273,50 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
         }
       }
 
+      // 處理身份證件資料（如果有提供）
+      let savedIdDocuments = artistDetail.idDocuments;
+      if (idDocuments && Array.isArray(idDocuments)) {
+        // 先刪除該藝人的所有現有身份證件資料（除了要保留的已存在記錄）
+        const existingIdDocumentIds = idDocuments
+          .filter((doc: any) => doc.id && doc.id < 1000000000)
+          .map((doc: any) => doc.id);
+
+        await tx.artistIdDocument.deleteMany({
+          where: {
+            artistId: artistDetailFields.artistId,
+            id: { notIn: existingIdDocumentIds },
+          },
+        });
+
+        // 處理每一筆身份證件資料
+        savedIdDocuments = [];
+        for (const idDocument of idDocuments) {
+          if (idDocument.id && idDocument.id < 1000000000) {
+            // 更新現有記錄
+            const updated = await tx.artistIdDocument.update({
+              where: { id: idDocument.id },
+              data: {
+                idType: idDocument.idType,
+                idNumber: idDocument.idNumber,
+                isPrimary: idDocument.isPrimary,
+              },
+            });
+            savedIdDocuments.push(updated);
+          } else {
+            // 新增記錄
+            const created = await tx.artistIdDocument.create({
+              data: {
+                artistId: artistDetailFields.artistId,
+                idType: idDocument.idType,
+                idNumber: idDocument.idNumber,
+                isPrimary: idDocument.isPrimary,
+              },
+            });
+            savedIdDocuments.push(created);
+          }
+        }
+      }
+
       // 獲取代號選項來更新基本檔案中的名稱欄位
       const getCodeOptionName = async (category: string, code: string) => {
         if (!code) return "";
@@ -352,9 +404,7 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
 
       // 處理語言資料同步到基本檔案
       if (savedLanguages && savedLanguages.length > 0) {
-        const primaryLanguage = savedLanguages.find(
-          (l: any) => l.isPrimary
-        );
+        const primaryLanguage = savedLanguages.find((l: any) => l.isPrimary);
 
         if (primaryLanguage) {
           basicInfoUpdate.mainLang = primaryLanguage.languageCode;
@@ -375,9 +425,7 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
 
       // 處理宗教資料同步到基本檔案
       if (savedReligions && savedReligions.length > 0) {
-        const primaryReligion = savedReligions.find(
-          (r: any) => r.isPrimary
-        );
+        const primaryReligion = savedReligions.find((r: any) => r.isPrimary);
 
         if (primaryReligion) {
           basicInfoUpdate.religion = primaryReligion.religionCode;
@@ -410,6 +458,7 @@ app.post("/api/artist-detail", async (req: Request, res: Response) => {
         nationalities: savedNationalities,
         languages: savedLanguages,
         religions: savedReligions,
+        idDocuments: savedIdDocuments,
       };
     });
 

@@ -191,6 +191,18 @@ async function seedCodeOptions() {
       { category: "religion", code: "other", name: "其他", displayOrder: 6 },
     ];
 
+    // 身份證件類型選項
+    const idTypeOptions = [
+      { category: "id_type", code: "id_card", name: "身分證", displayOrder: 1 },
+      { category: "id_type", code: "passport", name: "護照", displayOrder: 2 },
+      {
+        category: "id_type",
+        code: "health_card",
+        name: "健保卡",
+        displayOrder: 3,
+      },
+    ];
+
     // 批量新增所有選項
     const allOptions = [
       ...genderOptions,
@@ -202,6 +214,7 @@ async function seedCodeOptions() {
       ...nationalityOptions,
       ...languageOptions,
       ...religionOptions,
+      ...idTypeOptions,
     ];
 
     for (const option of allOptions) {
@@ -248,9 +261,9 @@ async function seedArtistBasicInfo() {
         nationalityCodeName: "台灣",
         mainLang: "zh",
         mainLangName: "中文",
-        religion: "01",
+        religion: "buddhism",
         religionName: "佛教",
-        idType: "01",
+        idType: "id_card",
         idTypeName: "身分證",
         idNo: "A123456789",
       },
@@ -293,10 +306,10 @@ async function seedArtistBasicInfo() {
         nationalityCodeName: "台灣",
         mainLang: "zh",
         mainLangName: "中文",
-        religion: "02",
+        religion: "catholic",
         religionName: "天主教",
-        idType: "01",
-        idTypeName: "身分證",
+        idType: "passport",
+        idTypeName: "護照",
         idNo: "B987654321",
       },
     });
@@ -304,6 +317,38 @@ async function seedArtistBasicInfo() {
     console.log("樣本藝人資料已新增：", sampleArtist);
     console.log("樣本藝人明細資料已新增：", sampleArtistDetail);
     console.log("第二個樣本藝人資料已新增：", sampleArtist2);
+
+    // 新增範例身份證件資料
+    const sampleIdDocuments = await Promise.all([
+      // 為第一個藝人新增身份證件
+      prisma.artistIdDocument.create({
+        data: {
+          artistId: "ART001",
+          idType: "id_card",
+          idNumber: "A123456789",
+          isPrimary: true,
+        },
+      }),
+      prisma.artistIdDocument.create({
+        data: {
+          artistId: "ART001",
+          idType: "health_card",
+          idNumber: "3253123145211123456",
+          isPrimary: false,
+        },
+      }),
+      // 為第二個藝人新增身份證件
+      prisma.artistIdDocument.create({
+        data: {
+          artistId: "ART002",
+          idType: "passport",
+          idNumber: "32531234562",
+          isPrimary: true,
+        },
+      }),
+    ]);
+
+    console.log("範例身份證件資料已新增：", sampleIdDocuments);
   } catch (error) {
     console.error("新增樣本資料時發生錯誤：", error);
   }

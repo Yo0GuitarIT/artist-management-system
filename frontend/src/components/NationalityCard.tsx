@@ -1,5 +1,5 @@
 import { useArtistManagement } from "../context";
-import { useDeleteArtistNationality } from "../hooks/useArtistMutatinons";
+import { useDeleteArtistNationality } from "../hooks/useArtistMutations";
 import type { ArtistNationality } from "../types/artistBasicInfo";
 
 export default function NationalityCard() {
