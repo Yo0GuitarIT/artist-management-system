@@ -1,4 +1,5 @@
 import { useArtistManagement } from "../context";
+import { useDeleteArtistIdDocument } from "../hooks/useArtistMutatinons";
 import type { ArtistIdDocument } from "../types/artistBasicInfo";
 
 export default function IdDocumentCard() {
@@ -8,6 +9,8 @@ export default function IdDocumentCard() {
     setEditingIdDocuments,
     codeOptions,
   } = useArtistManagement();
+
+  const deleteIdDocumentMutation = useDeleteArtistIdDocument();
 
   if (!artistBasicInfo) {
     return null; // 如果沒有藝人資料就不顯示
@@ -69,14 +72,33 @@ export default function IdDocumentCard() {
     setEditingIdDocuments(updatedDocuments);
   };
 
-  // 刪除身分證件 (不立即存檔)
-  const handleDeleteDocument = (id: number) => {
+  // 刪除身分證件 (立即執行 API)
+  const handleDeleteDocument = async (id: number) => {
     if (!confirm("確定要刪除這筆證件資料嗎？")) return;
 
-    const updatedDocuments = editingIdDocuments.filter(
-      (document) => document.id !== id
-    );
-    setEditingIdDocuments(updatedDocuments);
+    // 如果是新增的證件（臨時 ID），直接從列表中移除
+    if (id > 1000000000) {
+      // 時間戳 ID
+      const updatedDocuments = editingIdDocuments.filter(
+        (document) => document.id !== id
+      );
+      setEditingIdDocuments(updatedDocuments);
+      return;
+    }
+
+    // 如果是已存在的證件，呼叫 API 刪除
+    try {
+      await deleteIdDocumentMutation.mutateAsync(id);
+
+      // 刪除成功後，從本地狀態中移除該證件
+      const updatedDocuments = editingIdDocuments.filter(
+        (document) => document.id !== id
+      );
+      setEditingIdDocuments(updatedDocuments);
+    } catch (error) {
+      console.error("刪除身份證件失敗:", error);
+      alert("刪除身份證件失敗");
+    }
   };
 
   return (
@@ -87,7 +109,8 @@ export default function IdDocumentCard() {
         </h2>
         <button
           onClick={handleAddDocument}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+          disabled={deleteIdDocumentMutation.isPending}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors duration-200"
         >
           新增
         </button>
@@ -112,7 +135,8 @@ export default function IdDocumentCard() {
             <div className="col-span-1">
               <button
                 onClick={() => handleDeleteDocument(document.id)}
-                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                disabled={deleteIdDocumentMutation.isPending}
+                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
                 title="刪除"
               >
                 <svg

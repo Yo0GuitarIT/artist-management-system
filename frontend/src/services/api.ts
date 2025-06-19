@@ -94,6 +94,39 @@ export const apiService = {
       return response.data;
     },
   },
+
+  // 語言資料操作
+  artistLanguage: {
+    // 刪除語言資料 (立即執行)
+    delete: async (
+      id: number
+    ): Promise<{ success: boolean; message?: string }> => {
+      const response = await api.delete(`/artist-language/${id}`);
+      return response.data;
+    },
+  },
+
+  // 宗教資料操作
+  artistReligion: {
+    // 刪除宗教資料 (立即執行)
+    delete: async (
+      id: number
+    ): Promise<{ success: boolean; message?: string }> => {
+      const response = await api.delete(`/artist-religion/${id}`);
+      return response.data;
+    },
+  },
+
+  // 身份證件資料操作
+  artistIdDocument: {
+    // 刪除身份證件資料 (立即執行)
+    delete: async (
+      id: number
+    ): Promise<{ success: boolean; message?: string }> => {
+      const response = await api.delete(`/artist-id-document/${id}`);
+      return response.data;
+    },
+  },
 };
 
 export default api;

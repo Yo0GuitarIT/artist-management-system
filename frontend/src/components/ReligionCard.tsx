@@ -1,4 +1,5 @@
 import { useArtistManagement } from "../context";
+import { useDeleteArtistReligion } from "../hooks/useArtistMutatinons";
 import type { ArtistReligion } from "../types/artistBasicInfo";
 
 export default function ReligionCard() {
@@ -8,6 +9,8 @@ export default function ReligionCard() {
     setEditingReligions,
     codeOptions,
   } = useArtistManagement();
+
+  const deleteReligionMutation = useDeleteArtistReligion();
 
   if (!artistBasicInfo) {
     return null; // 如果沒有藝人資料就不顯示
@@ -54,14 +57,33 @@ export default function ReligionCard() {
     setEditingReligions(updatedReligions);
   };
 
-  // 刪除宗教 (不立即存檔，僅從本地狀態移除)
-  const handleDeleteReligion = (id: number) => {
+  // 刪除宗教 (立即執行 API)
+  const handleDeleteReligion = async (id: number) => {
     if (!confirm("確定要刪除這筆宗教資料嗎？")) return;
 
-    const updatedReligions = editingReligions.filter(
-      (religion) => religion.id !== id
-    );
-    setEditingReligions(updatedReligions);
+    // 如果是新增的宗教（臨時 ID），直接從列表中移除
+    if (id > 1000000000) {
+      // 時間戳 ID
+      const updatedReligions = editingReligions.filter(
+        (religion) => religion.id !== id
+      );
+      setEditingReligions(updatedReligions);
+      return;
+    }
+
+    // 如果是已存在的宗教，呼叫 API 刪除
+    try {
+      await deleteReligionMutation.mutateAsync(id);
+
+      // 刪除成功後，從本地狀態中移除該宗教
+      const updatedReligions = editingReligions.filter(
+        (religion) => religion.id !== id
+      );
+      setEditingReligions(updatedReligions);
+    } catch (error) {
+      console.error("刪除宗教失敗:", error);
+      alert("刪除宗教失敗");
+    }
   };
 
   return (
@@ -72,7 +94,8 @@ export default function ReligionCard() {
         </h2>
         <button
           onClick={handleAddReligion}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+          disabled={deleteReligionMutation.isPending}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors duration-200"
         >
           新增
         </button>
@@ -96,7 +119,8 @@ export default function ReligionCard() {
             <div className="col-span-1">
               <button
                 onClick={() => handleDeleteReligion(religion.id)}
-                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                disabled={deleteReligionMutation.isPending}
+                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
                 title="刪除"
               >
                 <svg

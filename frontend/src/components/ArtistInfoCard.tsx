@@ -140,31 +140,7 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  // 判斷是否有編輯中的國籍資料
-                  const originalNationalities =
-                    artistBasicInfo.artistDetail?.nationalities || [];
-                  const hasEditingNationalities =
-                    JSON.stringify(
-                      editingNationalities.map((n) => ({
-                        id: n.id > 1000000000000 ? null : n.id, // 新增的項目 ID 會很大，視為新增
-                        nationalityCode: n.nationalityCode,
-                        isPrimary: n.isPrimary,
-                      }))
-                    ) !==
-                    JSON.stringify(
-                      originalNationalities.map((n) => ({
-                        id: n.id,
-                        nationalityCode: n.nationalityCode,
-                        isPrimary: n.isPrimary,
-                      }))
-                    );
-
-                  // 優先使用編輯中的資料
-                  const nationalities = hasEditingNationalities
-                    ? editingNationalities
-                    : originalNationalities;
-
-                  const primaryNationality = nationalities.find(
+                  const primaryNationality = editingNationalities.find(
                     (n) => n.isPrimary
                   );
 
@@ -190,31 +166,7 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  // 判斷是否有編輯中的語言資料
-                  const originalLanguages =
-                    artistBasicInfo.artistDetail?.languages || [];
-                  const hasEditingLanguages =
-                    JSON.stringify(
-                      editingLanguages.map((l) => ({
-                        id: l.id > 1000000000000 ? null : l.id, // 新增的項目 ID 會很大，視為新增
-                        languageCode: l.languageCode,
-                        isPrimary: l.isPrimary,
-                      }))
-                    ) !==
-                    JSON.stringify(
-                      originalLanguages.map((l) => ({
-                        id: l.id,
-                        languageCode: l.languageCode,
-                        isPrimary: l.isPrimary,
-                      }))
-                    );
-
-                  // 優先使用編輯中的資料
-                  const languages = hasEditingLanguages
-                    ? editingLanguages
-                    : originalLanguages;
-
-                  const primaryLanguage = languages.find((l) => l.isPrimary);
+                  const primaryLanguage = editingLanguages.find((l) => l.isPrimary);
 
                   if (primaryLanguage) {
                     const languageOption = codeOptions.language.find(
@@ -234,31 +186,7 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  // 判斷是否有編輯中的宗教資料
-                  const originalReligions =
-                    artistBasicInfo.artistDetail?.religions || [];
-                  const hasEditingReligions =
-                    JSON.stringify(
-                      editingReligions.map((r) => ({
-                        id: r.id > 1000000000000 ? null : r.id, // 新增的項目 ID 會很大，視為新增
-                        religionCode: r.religionCode,
-                        isPrimary: r.isPrimary,
-                      }))
-                    ) !==
-                    JSON.stringify(
-                      originalReligions.map((r) => ({
-                        id: r.id,
-                        religionCode: r.religionCode,
-                        isPrimary: r.isPrimary,
-                      }))
-                    );
-
-                  // 優先使用編輯中的資料
-                  const religions = hasEditingReligions
-                    ? editingReligions
-                    : originalReligions;
-
-                  const primaryReligion = religions.find((r) => r.isPrimary);
+                  const primaryReligion = editingReligions.find((r) => r.isPrimary);
 
                   if (primaryReligion) {
                     const religionOption = codeOptions.religion.find(
@@ -278,34 +206,8 @@ export default function ArtistInfoCard() {
               </span>
               <div>
                 {(() => {
-                  // 判斷是否有編輯中的身份證件資料
-                  const originalIdDocuments =
-                    artistBasicInfo.artistDetail?.idDocuments || [];
-                  const hasEditingIdDocuments =
-                    JSON.stringify(
-                      editingIdDocuments.map((doc) => ({
-                        id: doc.id > 1000000000000 ? null : doc.id, // 新增的項目 ID 會很大，視為新增
-                        idType: doc.idType,
-                        idNumber: doc.idNumber,
-                        isPrimary: doc.isPrimary,
-                      }))
-                    ) !==
-                    JSON.stringify(
-                      originalIdDocuments.map((doc) => ({
-                        id: doc.id,
-                        idType: doc.idType,
-                        idNumber: doc.idNumber,
-                        isPrimary: doc.isPrimary,
-                      }))
-                    );
-
-                  // 優先使用編輯中的資料，如果沒有則使用原始資料
-                  const idDocuments = hasEditingIdDocuments
-                    ? editingIdDocuments
-                    : originalIdDocuments;
-
                   // 只顯示主要證件
-                  const primaryDocument = idDocuments.find(
+                  const primaryDocument = editingIdDocuments.find(
                     (doc) => doc.isPrimary
                   );
 

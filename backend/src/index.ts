@@ -531,6 +531,143 @@ app.delete(
   }
 );
 
+// 刪除藝人語言
+app.delete("/api/artist-language/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const language = await prisma.artistLanguage.findUnique({
+      where: { id },
+    });
+
+    if (!language) {
+      res.status(404).json({
+        success: false,
+        message: "找不到指定的語言資料",
+      });
+      return;
+    }
+
+    const wasPrimary = language.isPrimary;
+
+    await prisma.$transaction(async (tx) => {
+      // 刪除語言資料
+      await tx.artistLanguage.delete({
+        where: { id },
+      });
+
+      // 如果刪除的是主要語言，清除基本檔案的語言資料
+      if (wasPrimary) {
+        await tx.artistBasicInfo.update({
+          where: { artistId: language.artistId },
+          data: {
+            mainLang: null,
+            mainLangName: null,
+          },
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "語言資料刪除成功",
+    });
+  } catch (error) {
+    console.error("Error deleting artist language:", error);
+    res.status(500).json({
+      success: false,
+      message: "刪除語言資料時發生錯誤",
+    });
+  }
+});
+
+// 刪除藝人宗教
+app.delete("/api/artist-religion/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const religion = await prisma.artistReligion.findUnique({
+      where: { id },
+    });
+
+    if (!religion) {
+      res.status(404).json({
+        success: false,
+        message: "找不到指定的宗教資料",
+      });
+      return;
+    }
+
+    const wasPrimary = religion.isPrimary;
+
+    await prisma.$transaction(async (tx) => {
+      // 刪除宗教資料
+      await tx.artistReligion.delete({
+        where: { id },
+      });
+
+      // 如果刪除的是主要宗教，清除基本檔案的宗教資料
+      if (wasPrimary) {
+        await tx.artistBasicInfo.update({
+          where: { artistId: religion.artistId },
+          data: {
+            religion: null,
+            religionName: null,
+          },
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "宗教資料刪除成功",
+    });
+  } catch (error) {
+    console.error("Error deleting artist religion:", error);
+    res.status(500).json({
+      success: false,
+      message: "刪除宗教資料時發生錯誤",
+    });
+  }
+});
+
+// 刪除藝人身份證件
+app.delete(
+  "/api/artist-id-document/:id",
+  async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      const idDocument = await prisma.artistIdDocument.findUnique({
+        where: { id },
+      });
+
+      if (!idDocument) {
+        res.status(404).json({
+          success: false,
+          message: "找不到指定的身份證件資料",
+        });
+        return;
+      }
+
+      await prisma.artistIdDocument.delete({
+        where: { id },
+      });
+
+      res.json({
+        success: true,
+        message: "身份證件資料刪除成功",
+      });
+    } catch (error) {
+      console.error("Error deleting artist id document:", error);
+      res.status(500).json({
+        success: false,
+        message: "刪除身份證件資料時發生錯誤",
+      });
+    }
+  }
+);
+
 // 優雅關閉資料庫連線
 process.on("beforeExit", async () => {
   await prisma.$disconnect();
