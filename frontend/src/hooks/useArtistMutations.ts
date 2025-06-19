@@ -55,3 +55,48 @@ export function useDeleteArtistNationality() {
     },
   });
 }
+
+// 刪除語言
+export function useDeleteArtistLanguage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: apiService.artistLanguage.delete,
+    onSuccess: () => {
+      // 刪除成功後，讓所有藝人基本資料查詢失效以重新載入
+      queryClient.invalidateQueries({
+        queryKey: ["artistBasicInfo"],
+      });
+    },
+  });
+}
+
+// 刪除宗教
+export function useDeleteArtistReligion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: apiService.artistReligion.delete,
+    onSuccess: () => {
+      // 刪除成功後，讓所有藝人基本資料查詢失效以重新載入
+      queryClient.invalidateQueries({
+        queryKey: ["artistBasicInfo"],
+      });
+    },
+  });
+}
+
+// 刪除身份證件
+export function useDeleteArtistIdDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: apiService.artistIdDocument.delete,
+    onSuccess: () => {
+      // 刪除成功後，讓所有藝人基本資料查詢失效以重新載入
+      queryClient.invalidateQueries({
+        queryKey: ["artistBasicInfo"],
+      });
+    },
+  });
+}

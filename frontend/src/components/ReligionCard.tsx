@@ -1,5 +1,5 @@
 import { useArtistManagement } from "../context";
-import { useDeleteArtistReligion } from "../hooks/useArtistMutatinons";
+import { useDeleteArtistReligion } from "../hooks/useArtistMutations";
 import type { ArtistReligion } from "../types/artistBasicInfo";
 
 export default function ReligionCard() {

@@ -1,5 +1,5 @@
 import { useArtistManagement } from "../context";
-import { useDeleteArtistIdDocument } from "../hooks/useArtistMutatinons";
+import { useDeleteArtistIdDocument } from "../hooks/useArtistMutations";
 import type { ArtistIdDocument } from "../types/artistBasicInfo";
 
 export default function IdDocumentCard() {

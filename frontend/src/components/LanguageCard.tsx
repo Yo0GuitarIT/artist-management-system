@@ -1,5 +1,5 @@
 import { useArtistManagement } from "../context";
-import { useDeleteArtistLanguage } from "../hooks/useArtistMutatinons";
+import { useDeleteArtistLanguage } from "../hooks/useArtistMutations";
 import type { ArtistLanguage } from "../types/artistBasicInfo";
 
 export default function LanguageCard() {
