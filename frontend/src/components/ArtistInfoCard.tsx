@@ -3,10 +3,6 @@ import { useArtistManagement } from "../context";
 export default function ArtistInfoCard() {
   const {
     artistBasicInfo,
-    editingIdDocuments,
-    editingNationalities,
-    editingLanguages,
-    editingReligions,
     codeOptions,
     isSaving,
     handleRefresh,
@@ -140,7 +136,9 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  const primaryNationality = editingNationalities.find(
+                  // 只顯示已儲存的資料（來自 API）
+                  const savedNationalities = artistBasicInfo.artistDetail?.nationalities || [];
+                  const primaryNationality = savedNationalities.find(
                     (n) => n.isPrimary
                   );
 
@@ -166,7 +164,9 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  const primaryLanguage = editingLanguages.find((l) => l.isPrimary);
+                  // 只顯示已儲存的資料（來自 API）
+                  const savedLanguages = artistBasicInfo.artistDetail?.languages || [];
+                  const primaryLanguage = savedLanguages.find((l) => l.isPrimary);
 
                   if (primaryLanguage) {
                     const languageOption = codeOptions.language.find(
@@ -186,7 +186,9 @@ export default function ArtistInfoCard() {
               </span>
               <p className="text-gray-900 dark:text-white">
                 {(() => {
-                  const primaryReligion = editingReligions.find((r) => r.isPrimary);
+                  // 只顯示已儲存的資料（來自 API）
+                  const savedReligions = artistBasicInfo.artistDetail?.religions || [];
+                  const primaryReligion = savedReligions.find((r) => r.isPrimary);
 
                   if (primaryReligion) {
                     const religionOption = codeOptions.religion.find(
@@ -206,8 +208,9 @@ export default function ArtistInfoCard() {
               </span>
               <div>
                 {(() => {
-                  // 只顯示主要證件
-                  const primaryDocument = editingIdDocuments.find(
+                  // 只顯示已儲存的資料（來自 API）
+                  const savedIdDocuments = artistBasicInfo.artistDetail?.idDocuments || [];
+                  const primaryDocument = savedIdDocuments.find(
                     (doc) => doc.isPrimary
                   );
 
