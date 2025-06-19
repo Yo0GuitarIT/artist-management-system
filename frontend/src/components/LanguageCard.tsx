@@ -1,5 +1,6 @@
 import { useArtistManagement } from "../context";
 import { useDeleteArtistLanguage } from "../hooks/useArtistMutations";
+import toast from "react-hot-toast";
 import type { ArtistLanguage } from "../types/artistBasicInfo";
 
 export default function LanguageCard() {
@@ -82,7 +83,7 @@ export default function LanguageCard() {
       setEditingLanguages(updatedLanguages);
     } catch (error) {
       console.error("刪除語言失敗:", error);
-      alert("刪除語言失敗");
+      toast.error("刪除語言失敗");
     }
   };
 

@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 import type { ReactNode } from "react";
 import type {
   ArtistBasicInfo,
@@ -229,7 +230,7 @@ export function ArtistManagementProvider({
       {
         onSuccess: (response) => {
           if (response.success) {
-            alert("儲存成功！");
+            toast.success("儲存成功！");
             // React Query hook 會自動 invalidate 快取並重新載入資料
             // 額外確保資料更新
             setTimeout(() => {

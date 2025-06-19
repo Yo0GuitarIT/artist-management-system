@@ -1,5 +1,6 @@
 import { useArtistManagement } from "../context";
 import { useDeleteArtistNationality } from "../hooks/useArtistMutations";
+import toast from "react-hot-toast";
 import type { ArtistNationality } from "../types/artistBasicInfo";
 
 export default function NationalityCard() {
@@ -82,7 +83,7 @@ export default function NationalityCard() {
       setEditingNationalities(updatedNationalities);
     } catch (error) {
       console.error("刪除國籍失敗:", error);
-      alert("刪除國籍失敗");
+      toast.error("刪除國籍失敗");
     }
   };
 

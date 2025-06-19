@@ -1,5 +1,6 @@
 import { useArtistManagement } from "../context";
 import { useDeleteArtistIdDocument } from "../hooks/useArtistMutations";
+import toast from "react-hot-toast";
 import type { ArtistIdDocument } from "../types/artistBasicInfo";
 
 export default function IdDocumentCard() {
@@ -97,7 +98,7 @@ export default function IdDocumentCard() {
       setEditingIdDocuments(updatedDocuments);
     } catch (error) {
       console.error("刪除身份證件失敗:", error);
-      alert("刪除身份證件失敗");
+      toast.error("刪除身份證件失敗");
     }
   };
 

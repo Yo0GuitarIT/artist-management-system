@@ -1,5 +1,6 @@
 import { useArtistManagement } from "../context";
 import { useDeleteArtistReligion } from "../hooks/useArtistMutations";
+import toast from "react-hot-toast";
 import type { ArtistReligion } from "../types/artistBasicInfo";
 
 export default function ReligionCard() {
@@ -82,7 +83,7 @@ export default function ReligionCard() {
       setEditingReligions(updatedReligions);
     } catch (error) {
       console.error("刪除宗教失敗:", error);
-      alert("刪除宗教失敗");
+      toast.error("刪除宗教失敗");
     }
   };
 

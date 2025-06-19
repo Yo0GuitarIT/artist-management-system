@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 import type { ReactNode } from "react";
 import type {
   ArtistBasicInfo,
@@ -14,7 +15,7 @@ import {
   ArtistManagementContext,
   type CodeOptionsMap,
   type ArtistManagementContextType,
-} from "./context";
+} from "./ArtistManagementContext";
 
 // Provider Props
 interface ArtistManagementProviderProps {
@@ -172,7 +173,7 @@ export function ArtistManagementProvider({
       {
         onSuccess: (response) => {
           if (response.success) {
-            alert("儲存成功！");
+            toast.success("儲存成功！");
             // React Query hook 會自動 invalidate 快取並重新載入資料
             // 額外確保資料更新
             setTimeout(() => {
@@ -240,7 +241,9 @@ export function ArtistManagementProvider({
     category: keyof CodeOptionsMap,
     code: string
   ): string => {
-    const option = codeOptions[category]?.find((opt) => opt.code === code);
+    const option = codeOptions[category]?.find(
+      (opt: { code: string; name: string }) => opt.code === code
+    );
     return option?.name || code;
   };
 
